@@ -3,826 +3,973 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Zuhair Abbas</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@200;300;400&display=swap" rel="stylesheet"/>
+<title>zuhair abbas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@100;300;400&display=swap" rel="stylesheet"/>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg:            #030308;
-  --bg2:           #07070f;
-  --surface:       rgba(255,255,255,0.028);
-  --surface-hover: rgba(255,255,255,0.05);
-  --edge:          rgba(255,255,255,0.07);
-  --edge-bright:   rgba(255,255,255,0.18);
-
-  --ice:    #7ecfff;
-  --ice2:   #a8e4ff;
-  --rust:   #ff6b35;
-  --rust2:  #ff9960;
-  --pale:   #e8e4dc;
-  --pale2:  rgba(232,228,220,0.55);
-  --pale3:  rgba(232,228,220,0.25);
-  --pale4:  rgba(232,228,220,0.10);
-
-  --rajdhani: 'Rajdhani', sans-serif;
-  --lora:     'Lora', serif;
-  --mono:     'JetBrains Mono', monospace;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:rgba(255,255,255,0.90);
+  --dim:rgba(255,255,255,0.45);
+  --faint:rgba(255,255,255,0.18);
+  --glow:0 0 12px rgba(255,255,255,0.35),0 0 30px rgba(255,255,255,0.12);
+  --font:-apple-system,'Helvetica Neue',Helvetica,Arial,sans-serif;
 }
+html,body{width:100%;height:100%;overflow:hidden;background:#020510}
+body{cursor:none;font-family:var(--font);font-weight:300;color:var(--white)}
 
-html { scroll-behavior: smooth; }
+/* canvas fills screen */
+#c{position:fixed;inset:0;width:100%;height:100%;z-index:0}
 
-body {
-  background: var(--bg);
-  color: var(--pale);
-  font-family: var(--lora);
-  overflow-x: hidden;
-  cursor: none;
+/* cursor */
+#cur{position:fixed;width:6px;height:6px;border-radius:50%;background:#fff;
+  pointer-events:none;z-index:9999;transform:translate(-50%,-50%);
+  box-shadow:0 0 8px rgba(255,255,255,0.8),0 0 20px rgba(255,255,255,0.3);
+  transition:width .15s,height .15s,opacity .15s}
+#cur.big{width:14px;height:14px;opacity:.6}
+#cur-trail{position:fixed;width:28px;height:28px;border-radius:50%;
+  border:1px solid rgba(255,255,255,0.2);pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);transition:none}
+
+/* scanlines */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:5;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 4px)}
+
+/* HUB UI */
+#hub{position:fixed;inset:0;z-index:10;pointer-events:none;transition:opacity .8s}
+#hub.hidden{opacity:0;pointer-events:none}
+
+.node{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;cursor:none}
+.node-box{
+  padding:.7rem 1.4rem;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(2,5,16,0.4);
+  backdrop-filter:blur(6px);
+  text-align:center;
+  transition:border-color .3s,background .3s,transform .2s;
 }
-
-/* ── CURSOR ── */
-#cur { position:fixed; width:6px; height:6px; background:var(--ice); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); mix-blend-mode:screen; }
-#cur-ring { position:fixed; width:32px; height:32px; border:1px solid rgba(126,207,255,0.35); border-radius:50%; pointer-events:none; z-index:9998; transform:translate(-50%,-50%); transition:width .25s,height .25s,border-color .25s; }
-.cl #cur { background:var(--rust); width:10px; height:10px; }
-.cl #cur-ring { width:44px; height:44px; border-color:rgba(255,107,53,0.4); }
-
-/* ── WEBGL CANVAS ── */
-#bg { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
-
-/* ── NOISE ── */
-body::before {
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.18;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+.node:hover .node-box{
+  border-color:rgba(255,255,255,0.35);
+  background:rgba(2,5,16,0.7);
+  transform:scale(1.06)
 }
+.node-n{font-size:.5rem;letter-spacing:.3em;color:var(--faint);margin-bottom:.3rem}
+.node-l{font-size:.78rem;letter-spacing:.18em;text-transform:lowercase;
+  color:var(--white);text-shadow:var(--glow)}
+.node-sub{font-size:.45rem;letter-spacing:.14em;color:var(--faint);margin-top:.25rem;
+  opacity:0;transition:opacity .25s}
+.node:hover .node-sub{opacity:1}
 
-/* ── SCAN LINE ── */
-body::after {
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:1;
-  background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px);
+/* hero text */
+#hero{position:fixed;bottom:3rem;left:50%;transform:translateX(-50%);
+  z-index:10;text-align:center;pointer-events:none;transition:opacity .7s;white-space:nowrap}
+#hero h1{font-size:clamp(2rem,5vw,4.5rem);font-weight:100;letter-spacing:.08em;
+  color:var(--white);text-shadow:var(--glow)}
+#hero h1 span{font-weight:300}
+#hero p{font-size:.55rem;letter-spacing:.32em;color:var(--dim);margin-top:.6rem}
+#hero small{font-size:.5rem;letter-spacing:.2em;color:var(--faint);
+  display:block;margin-top:.4rem;font-style:italic;
+  animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:.8}}
+
+/* BACK */
+#back{position:fixed;top:1.5rem;left:1.8rem;z-index:200;
+  font-size:.52rem;letter-spacing:.25em;text-transform:lowercase;
+  color:var(--dim);border:1px solid rgba(255,255,255,.1);
+  padding:.45rem .9rem;background:rgba(2,5,16,0.6);
+  cursor:none;transition:color .2s,border-color .2s,opacity .3s,box-shadow .2s;
+  opacity:0;pointer-events:none}
+#back.vis{opacity:1;pointer-events:auto}
+#back:hover{color:var(--white);border-color:rgba(255,255,255,.3);box-shadow:var(--glow)}
+
+/* SECTION OVERLAY */
+#overlay{position:fixed;inset:0;z-index:50;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .9s}
+#overlay.vis{opacity:1;pointer-events:auto}
+
+.sec-panel{
+  max-width:820px;width:90%;max-height:80vh;overflow-y:auto;
+  padding:3rem;
+  border:1px solid;
+  background:rgba(2,5,16,0.75);
+  backdrop-filter:blur(16px);
+  scrollbar-width:thin;
 }
+.sec-panel::-webkit-scrollbar{width:2px}
+.sec-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15)}
 
-/* ── NAV ── */
-nav {
-  position:fixed; top:0; left:0; right:0; z-index:100;
-  display:flex; justify-content:space-between; align-items:center;
-  padding:1.2rem 5vw;
-  background:linear-gradient(to bottom, rgba(3,3,8,0.92), transparent);
-  border-bottom:1px solid transparent;
-}
-.nav-logo {
-  font-family:var(--rajdhani); font-weight:600; font-size:.75rem;
-  letter-spacing:.4em; text-transform:uppercase; color:var(--ice);
-  text-decoration:none; opacity:.8;
-}
-.nav-links { display:flex; gap:2rem; list-style:none; }
-.nav-links a {
-  font-family:var(--mono); font-size:.58rem; letter-spacing:.22em;
-  text-transform:uppercase; color:var(--pale3); text-decoration:none;
-  transition:color .2s;
-}
-.nav-links a:hover, .nav-links a.active { color:var(--pale); }
+.sec-panel[data-color="red"]{border-color:rgba(220,60,60,0.3);box-shadow:0 0 60px rgba(220,60,60,0.08),inset 0 0 40px rgba(220,60,60,0.03)}
+.sec-panel[data-color="blue"]{border-color:rgba(60,130,220,0.3);box-shadow:0 0 60px rgba(60,130,220,0.08),inset 0 0 40px rgba(60,130,220,0.03)}
+.sec-panel[data-color="green"]{border-color:rgba(60,200,120,0.3);box-shadow:0 0 60px rgba(60,200,120,0.08),inset 0 0 40px rgba(60,200,120,0.03)}
+.sec-panel[data-color="purple"]{border-color:rgba(160,80,220,0.3);box-shadow:0 0 60px rgba(160,80,220,0.08),inset 0 0 40px rgba(160,80,220,0.03)}
+.sec-panel[data-color="white"]{border-color:rgba(255,255,255,0.18);box-shadow:0 0 60px rgba(255,255,255,0.05)}
 
-/* ── LAYOUT ── */
-.container { position:relative; z-index:2; }
-section { padding:9rem 8vw; max-width:1180px; margin:0 auto; }
+/* accent line per color */
+.sec-panel[data-color="red"] .accent{color:rgba(255,100,100,0.9);text-shadow:0 0 12px rgba(255,80,80,0.5)}
+.sec-panel[data-color="blue"] .accent{color:rgba(100,170,255,0.9);text-shadow:0 0 12px rgba(80,150,255,0.5)}
+.sec-panel[data-color="green"] .accent{color:rgba(80,220,140,0.9);text-shadow:0 0 12px rgba(60,200,120,0.5)}
+.sec-panel[data-color="purple"] .accent{color:rgba(200,120,255,0.9);text-shadow:0 0 12px rgba(180,100,255,0.5)}
+.sec-panel[data-color="white"] .accent{color:rgba(255,255,255,0.95);text-shadow:var(--glow)}
 
-/* ── HERO ── */
-#hero {
-  min-height:100vh; display:flex; flex-direction:column; justify-content:center;
-  position:relative; z-index:2; padding:0 8vw;
-}
-.h-label {
-  font-family:var(--mono); font-size:.62rem; letter-spacing:.35em; color:var(--ice);
-  text-transform:uppercase; margin-bottom:2rem; opacity:0;
-  animation:fadeUp .8s .2s cubic-bezier(.22,1,.36,1) forwards;
-}
-.h-label span { color:rgba(126,207,255,.45); margin-right:.5em; }
-.h-name {
-  font-family:var(--rajdhani); font-weight:300;
-  font-size:clamp(5rem,12vw,11rem); letter-spacing:-.01em; line-height:.88;
-  margin-bottom:2.5rem; opacity:0;
-  animation:fadeUp .8s .4s cubic-bezier(.22,1,.36,1) forwards;
-}
-.h-name em { font-style:normal; font-weight:600; color:var(--ice); display:block; }
-.h-desc {
-  font-family:var(--lora); font-style:italic; font-size:clamp(.9rem,1.6vw,1.1rem);
-  color:var(--pale2); line-height:1.8; max-width:480px;
-  margin-bottom:3.5rem; opacity:0;
-  animation:fadeUp .8s .6s cubic-bezier(.22,1,.36,1) forwards;
-}
+/* section typography */
+.sec-label{font-size:.48rem;letter-spacing:.3em;color:var(--faint);margin-bottom:.5rem}
+.sec-title{font-size:clamp(1.2rem,3vw,2rem);font-weight:100;letter-spacing:.12em;
+  color:var(--white);text-shadow:var(--glow);margin-bottom:2.5rem;padding-bottom:1rem;
+  border-bottom:1px solid rgba(255,255,255,.07)}
+.sec-rule{height:1px;background:rgba(255,255,255,.06);margin:1.5rem 0}
 
-.h-stats {
-  display:flex; gap:0; opacity:0;
-  animation:fadeUp .8s .8s cubic-bezier(.22,1,.36,1) forwards;
-}
-.h-stat {
-  padding:.8rem 2.4rem .8rem 0; border-right:1px solid var(--edge);
-  margin-right:2.4rem;
-}
-.h-stat:last-child { border-right:none; }
-.h-stat b {
-  display:block; font-family:var(--rajdhani); font-weight:600;
-  font-size:2.2rem; line-height:1; color:var(--pale); margin-bottom:.2rem;
-}
-.h-stat small {
-  font-family:var(--mono); font-size:.52rem; letter-spacing:.18em;
-  text-transform:uppercase; color:var(--pale3);
-}
+p.body{font-size:.82rem;line-height:1.95;color:var(--dim);margin-bottom:.9rem}
+p.body strong{color:var(--white);font-weight:400}
 
-.scroll-cue {
-  position:absolute; bottom:3rem; left:8vw;
-  display:flex; align-items:center; gap:1rem;
-  opacity:0; animation:fadeIn 1s 1.5s forwards;
-}
-.scroll-cue span { font-family:var(--mono); font-size:.52rem; letter-spacing:.25em; color:var(--pale4); text-transform:uppercase; }
-.scroll-line { width:60px; height:1px; background:var(--ice); opacity:.3; transform-origin:left; animation:scPulse 2.5s ease-in-out infinite; }
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);margin-top:1.8rem}
+.stat{padding:1rem;text-align:center;background:rgba(2,5,16,0.5)}
+.stat b{display:block;font-size:1.8rem;font-weight:100;color:var(--white);
+  text-shadow:var(--glow);margin-bottom:.2rem}
+.stat small{font-size:.45rem;letter-spacing:.18em;color:var(--faint)}
 
-/* ── SECTION HEADER ── */
-.sec-head { display:flex; align-items:center; gap:1.4rem; margin-bottom:4.5rem; }
-.sec-num { font-family:var(--mono); font-size:.58rem; letter-spacing:.12em; color:var(--ice); opacity:.6; }
-.sec-title { font-family:var(--rajdhani); font-weight:600; font-size:clamp(1.2rem,2.5vw,1.8rem); letter-spacing:.12em; text-transform:uppercase; color:var(--pale); }
-.sec-rule { flex:1; height:1px; background:var(--edge); }
+.tline{border-left:1px solid rgba(255,255,255,.08);padding-left:1.8rem;margin-top:0}
+.ti{position:relative;padding-bottom:2rem}
+.ti:last-child{padding-bottom:0}
+.ti::before{content:'';position:absolute;left:-1.9rem;top:.3rem;
+  width:7px;height:7px;border:1px solid rgba(255,255,255,.3);border-radius:50%;background:rgba(2,5,16,1)}
+.ti-date{font-size:.48rem;letter-spacing:.2em;color:var(--faint);margin-bottom:.35rem}
+.ti-role{font-size:.88rem;font-weight:400;color:var(--white);margin-bottom:.08rem}
+.ti-org{font-size:.72rem;font-style:italic;color:var(--dim);margin-bottom:.6rem}
+.ti ul{list-style:none;padding:0}
+.ti li{font-size:.76rem;line-height:1.8;color:var(--dim);padding-left:.8rem;
+  position:relative;margin-bottom:.2rem}
+.ti li::before{content:'–';position:absolute;left:0;color:rgba(255,255,255,.2)}
 
-/* ── REVEAL ── */
-.reveal { opacity:0; transform:translateY(24px); transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1); }
-.reveal.in { opacity:1; transform:none; }
-.d1{transition-delay:.05s} .d2{transition-delay:.12s} .d3{transition-delay:.2s}
-.d4{transition-delay:.28s} .d5{transition-delay:.36s} .d6{transition-delay:.44s}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1px;
+  background:rgba(255,255,255,.06)}
+.pc{background:rgba(2,5,16,.6);padding:1.3rem;transition:background .2s;position:relative}
+.pc:hover{background:rgba(8,15,40,.8)}
+.pc-tag{font-size:.44rem;letter-spacing:.18em;color:var(--faint);margin-bottom:.4rem}
+.pc-score{position:absolute;top:1.1rem;right:1.1rem;font-size:.46rem;
+  letter-spacing:.1em;color:var(--dim)}
+.pc-title{font-size:.82rem;font-weight:400;color:var(--white);margin-bottom:.5rem;
+  line-height:1.3;padding-right:3.5rem}
+.pc:hover .pc-title{text-shadow:var(--glow)}
+.pc-desc{font-size:.72rem;line-height:1.75;color:var(--dim);margin-bottom:.8rem}
+.pc-tech{display:flex;flex-wrap:wrap;gap:.25rem}
+.pt{font-size:.42rem;letter-spacing:.1em;color:var(--faint);
+  border:1px solid rgba(255,255,255,.07);padding:.1rem .35rem}
 
-/* ── ABOUT ── */
-.about-grid { display:grid; grid-template-columns:3fr 2fr; gap:6rem; align-items:start; }
-.bio p { font-size:.95rem; line-height:1.95; color:var(--pale2); margin-bottom:1.1rem; }
-.bio p strong { color:var(--pale); font-style:normal; }
-.bio-cards { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--edge); border:1px solid var(--edge); }
-.bc { background:var(--bg2); padding:1.4rem; transition:background .25s; }
-.bc:hover { background:var(--surface-hover); }
-.bc b { display:block; font-family:var(--rajdhani); font-weight:600; font-size:2.4rem; color:var(--ice); line-height:1; margin-bottom:.3rem; }
-.bc small { font-family:var(--mono); font-size:.5rem; letter-spacing:.18em; text-transform:uppercase; color:var(--pale3); }
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1px;
+  background:rgba(255,255,255,.06)}
+.sg{background:rgba(2,5,16,.6);padding:1.1rem}
+.sg-t{font-size:.46rem;letter-spacing:.22em;color:var(--faint);margin-bottom:.7rem}
+.si{display:flex;flex-wrap:wrap;gap:.25rem}
+.s{font-size:.52rem;color:var(--dim);padding:.15rem .4rem;
+  border:1px solid rgba(255,255,255,.07);letter-spacing:.04em;transition:color .15s,border-color .15s}
+.s:hover{color:var(--white);border-color:rgba(255,255,255,.2)}
 
-/* ── TIMELINE ── */
-.timeline { position:relative; padding-left:2rem; }
-.timeline::before { content:''; position:absolute; left:0; top:.5rem; bottom:0; width:1px; background:var(--edge); }
-.titem { position:relative; padding:0 0 3rem 2.5rem; }
-.titem::before { content:''; position:absolute; left:-5px; top:.4rem; width:11px; height:11px; border:1px solid var(--ice); background:var(--bg); border-radius:50%; }
-.titem:last-child { padding-bottom:0; }
-.tdate { font-family:var(--mono); font-size:.55rem; letter-spacing:.2em; color:var(--ice); opacity:.7; text-transform:uppercase; margin-bottom:.5rem; }
-.trole { font-family:var(--rajdhani); font-weight:600; font-size:1.1rem; letter-spacing:.05em; color:var(--pale); margin-bottom:.15rem; }
-.torg { font-family:var(--lora); font-style:italic; font-size:.85rem; color:var(--pale3); margin-bottom:.9rem; }
-.tbullets { list-style:none; }
-.tbullets li { font-size:.85rem; line-height:1.8; color:var(--pale2); padding-left:1rem; position:relative; margin-bottom:.3rem; }
-.tbullets li::before { content:'–'; position:absolute; left:0; color:var(--ice); opacity:.5; }
+.clinks{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.06);margin-bottom:1.5rem}
+.cl2{display:flex;align-items:center;gap:1rem;text-decoration:none;
+  padding:.8rem 1rem;background:rgba(2,5,16,.6);transition:background .2s}
+.cl2:hover{background:rgba(8,15,40,.8)}
+.cl2-l{font-size:.44rem;letter-spacing:.2em;color:var(--faint);margin-bottom:.1rem;transition:color .2s}
+.cl2:hover .cl2-l{color:var(--white)}
+.cl2-v{font-size:.76rem;color:var(--dim)}
+.cl2-a{margin-left:auto;font-size:.7rem;color:rgba(255,255,255,.2);
+  opacity:0;transition:opacity .2s,transform .2s}
+.cl2:hover .cl2-a{opacity:1;transform:translateX(3px)}
+.motto{font-size:.8rem;line-height:1.85;color:var(--faint);font-style:italic;
+  border-left:1px solid rgba(255,255,255,.1);padding-left:1rem;margin-top:1.2rem}
 
-/* ── PROJECT GRID ── */
-.pgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:1px; background:var(--edge); }
-.pcard {
-  background:var(--bg2); padding:2rem; position:relative; overflow:hidden;
-  transition:background .3s;
-}
-.pcard::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:1px;
-  background:var(--edge-bright); opacity:0; transition:opacity .3s;
-}
-.pcard:hover { background:#0c0c18; }
-.pcard:hover::before { opacity:1; }
-.ptag { font-family:var(--mono); font-size:.52rem; letter-spacing:.18em; color:var(--pale3); text-transform:uppercase; margin-bottom:.7rem; }
-.pscore { position:absolute; top:1.8rem; right:1.8rem; font-family:var(--mono); font-size:.58rem; color:var(--ice); letter-spacing:.08em; opacity:.7; }
-.ptitle { font-family:var(--rajdhani); font-weight:600; font-size:1rem; letter-spacing:.04em; color:var(--pale); margin-bottom:.8rem; line-height:1.3; padding-right:4rem; transition:color .2s; }
-.pcard:hover .ptitle { color:var(--ice2); }
-.pdesc { font-size:.8rem; line-height:1.8; color:var(--pale2); margin-bottom:1.2rem; }
-.ptech { display:flex; flex-wrap:wrap; gap:.35rem; }
-.ptag2 { font-family:var(--mono); font-size:.5rem; letter-spacing:.1em; text-transform:uppercase; color:var(--pale4); border:1px solid rgba(255,255,255,.08); padding:.15rem .45rem; transition:border-color .2s; }
-.pcard:hover .ptag2 { border-color:rgba(126,207,255,.15); }
+/* loading */
+#loading{position:fixed;inset:0;z-index:300;background:#020510;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;
+  transition:opacity .8s}
+#loading.done{opacity:0;pointer-events:none}
+#loading p{font-size:.52rem;letter-spacing:.3em;color:var(--faint)}
 
-/* ── SKILLS ── */
-.sgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1px; background:var(--edge); }
-.sgroup { background:var(--bg2); padding:1.5rem; transition:background .25s; }
-.sgroup:hover { background:#0c0c18; }
-.sgroup-title { font-family:var(--mono); font-size:.55rem; letter-spacing:.22em; text-transform:uppercase; color:var(--ice); opacity:.8; margin-bottom:1rem; }
-.sitems { display:flex; flex-wrap:wrap; gap:.35rem; }
-.sitem { font-family:var(--mono); font-size:.58rem; color:var(--pale2); padding:.2rem .5rem; border:1px solid rgba(255,255,255,.07); transition:all .15s; letter-spacing:.04em; }
-.sitem:hover { color:var(--pale); border-color:rgba(255,255,255,.18); }
-
-/* ── CONTACT ── */
-.contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:6rem; align-items:start; }
-.contact-intro p { font-size:.95rem; line-height:1.9; color:var(--pale2); margin-bottom:2.5rem; }
-.clinks { display:flex; flex-direction:column; gap:1px; background:var(--edge); }
-.clink {
-  display:flex; align-items:center; gap:1.4rem; text-decoration:none;
-  padding:1rem 1.2rem; background:var(--bg2); transition:background .2s;
-}
-.clink:hover { background:#0c0c18; }
-.clink-body {}
-.clink-label { font-family:var(--mono); font-size:.52rem; letter-spacing:.2em; color:var(--pale4); text-transform:uppercase; margin-bottom:.15rem; }
-.clink:hover .clink-label { color:var(--ice); }
-.clink-val { font-size:.85rem; color:var(--pale2); transition:color .2s; }
-.clink:hover .clink-val { color:var(--pale); }
-.clink-arr { margin-left:auto; font-family:var(--mono); font-size:.8rem; color:var(--ice); opacity:0; transition:opacity .2s,transform .2s; }
-.clink:hover .clink-arr { opacity:.6; transform:translateX(4px); }
-
-.contact-glyph { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:280px; border:1px solid var(--edge); position:relative; overflow:hidden; }
-.cg-canvas { position:absolute; inset:0; }
-.cg-text { position:relative; z-index:1; text-align:center; }
-.cg-letter { font-family:var(--rajdhani); font-weight:300; font-size:6rem; color:var(--pale); opacity:.08; line-height:1; }
-.cg-motto { font-family:var(--lora); font-style:italic; font-size:.78rem; color:var(--pale3); max-width:220px; line-height:1.7; text-align:center; margin-top:1rem; }
-
-/* ── FOOTER ── */
-footer { position:relative; z-index:2; text-align:center; padding:2rem; border-top:1px solid var(--edge); font-family:var(--mono); font-size:.55rem; letter-spacing:.2em; color:var(--pale4); text-transform:uppercase; }
-
-/* ── KEYFRAMES ── */
-@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
-@keyframes scPulse { 0%,100%{transform:scaleX(1);opacity:.3} 50%{transform:scaleX(1.5);opacity:.6} }
-
-/* ── RESPONSIVE ── */
-@media(max-width:800px){
-  nav{padding:1rem 1.5rem;}
-  .nav-links{display:none;}
-  section{padding:5rem 1.5rem;}
-  #hero{padding:0 1.5rem;}
-  .about-grid,.contact-grid{grid-template-columns:1fr;gap:2.5rem;}
-  .contact-glyph{display:none;}
-  .h-stats{flex-wrap:wrap;}
+@media(max-width:600px){
+  .stats{grid-template-columns:1fr 1fr}
+  .sec-panel{padding:1.5rem}
+  #hero h1{font-size:2rem}
 }
 </style>
 </head>
 <body>
+<div id="loading"><p>initialising</p></div>
 <div id="cur"></div>
-<div id="cur-ring"></div>
-<canvas id="bg"></canvas>
+<div id="cur-trail"></div>
+<canvas id="c"></canvas>
 
-<nav>
-  <a href="#hero" class="nav-logo">Z · A</a>
-  <ul class="nav-links">
-    <li><a href="#about">About</a></li>
-    <li><a href="#experience">Experience</a></li>
-    <li><a href="#projects">Projects</a></li>
-    <li><a href="#skills">Skills</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ul>
-</nav>
-
-<div class="container">
-
-<!-- HERO -->
-<section id="hero">
-  <div class="h-label"><span>CS · HU · 2026</span>Karachi, Pakistan</div>
-  <h1 class="h-name">Zuhair<em>Abbas</em></h1>
-  <p class="h-desc">Computer Vision researcher and deep learning engineer — building systems that see, reason, and explain themselves.</p>
-  <div class="h-stats">
-    <div class="h-stat"><b>3.95</b><small>GPA</small></div>
-    <div class="h-stat"><b>9×</b><small>Teaching Assistant</small></div>
-    <div class="h-stat"><b>97%</b><small>Best F1 Score</small></div>
-    <div class="h-stat"><b>2×</b><small>Top Employee</small></div>
-  </div>
-  <div class="scroll-cue"><span>Scroll</span><div class="scroll-line"></div></div>
-</section>
-
-<!-- ABOUT -->
-<section id="about">
-  <div class="sec-head reveal"><span class="sec-num">01</span><h2 class="sec-title">About</h2><div class="sec-rule"></div></div>
-  <div class="about-grid">
-    <div class="bio reveal d1">
-      <p>I'm a final-year Computer Science student at <strong>Habib University, Karachi</strong>, specializing in Computer Vision, Machine Learning, and explainable AI. My work centers on building deep learning systems that are not only performant, but interpretable — models worth trusting.</p>
-      <p>Three years as a <strong>Teaching Assistant</strong> across nine courses, two-time Top Performing Student Employee, and a researcher across sentiment analysis, music recommendation, and plant disease detection. Currently building toward graduate programs in computer graphics and scientific visualization.</p>
-      <p>Outside research: podcast host at <strong>Habib University Runway Radio</strong>, Design Lead at the Arts &amp; Cultural Club, featured digital artist in the Arzu Anthology. Dark fantasy and gothic aesthetics inform all my creative work.</p>
-    </div>
-    <div class="bio-cards reveal d2">
-      <div class="bc"><b>3.95</b><small>GPA / 4.0</small></div>
-      <div class="bc"><b>9×</b><small>TA Roles</small></div>
-      <div class="bc"><b>97%</b><small>Peak F1</small></div>
-      <div class="bc"><b>6×</b><small>Dean's List</small></div>
-    </div>
-  </div>
-</section>
-
-<!-- EXPERIENCE -->
-<section id="experience">
-  <div class="sec-head reveal"><span class="sec-num">02</span><h2 class="sec-title">Experience</h2><div class="sec-rule"></div></div>
-  <div class="timeline">
-    <div class="titem reveal d1">
-      <div class="tdate">Aug 2023 — Present</div>
-      <div class="trole">Teaching Assistant</div>
-      <div class="torg">Habib University</div>
-      <ul class="tbullets">
-        <li>Supported ~30 students per course across 9 courses through recitations, office hours, and lab guidance.</li>
-        <li>Received the Top Performing Student Employee award twice for exceptional contribution to student success.</li>
-      </ul>
-    </div>
-    <div class="titem reveal d2">
-      <div class="tdate">May 2025 — Aug 2025</div>
-      <div class="trole">Undergraduate Researcher — Music Recommendation</div>
-      <div class="torg">Habib University</div>
-      <ul class="tbullets">
-        <li>Engineered a transparent recommendation system by fine-tuning Google's T5 to map natural language prompts to audio features.</li>
-        <li>Achieved ensemble accuracy of 80% across audio features, addressing the opacity problem in recommender systems.</li>
-      </ul>
-    </div>
-    <div class="titem reveal d3">
-      <div class="tdate">May 2024 — Aug 2024</div>
-      <div class="trole">Undergraduate Researcher — Sentiment Analysis</div>
-      <div class="torg">Habib University</div>
-      <ul class="tbullets">
-        <li>Built pipelines to collect, transcribe, and classify news video content on public sentiment toward price inflation.</li>
-        <li>Fine-tuned mDeBERTa and XLM-RoBERTa for multilingual classification, achieving F1 of 81%.</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- PROJECTS -->
-<section id="projects">
-  <div class="sec-head reveal"><span class="sec-num">03</span><h2 class="sec-title">Projects</h2><div class="sec-rule"></div></div>
-  <div class="pgrid">
-    <div class="pcard reveal d1">
-      <div class="ptag">Computer Vision · XAI</div><div class="pscore">F1 97%</div>
-      <div class="ptitle">Explainable Multi-Crop Disease Detection</div>
-      <p class="pdesc">Extended MobileViT for multi-crop plant disease classification on a consolidated dataset. Integrated Eigen-CAM and feature ablation to validate model attention on necrotic lesion regions.</p>
-      <div class="ptech"><span class="ptag2">Vision Transformers</span><span class="ptag2">Eigen-CAM</span><span class="ptag2">PyTorch</span><span class="ptag2">XAI</span></div>
-    </div>
-    <div class="pcard reveal d2">
-      <div class="ptag">3D Vision · Robotics</div><div class="pscore">1 Hz mapping</div>
-      <div class="ptitle">3D Robot Perception for Cave Environments</div>
-      <p class="pdesc">Procedural lava tube generation in Blender for locomotion testing. Implemented real-time elevation mapping for 3D point clouds and posture adaptation for low-clearance traversal.</p>
-      <div class="ptech"><span class="ptag2">Blender</span><span class="ptag2">ROS2</span><span class="ptag2">Gazebo</span><span class="ptag2">Elevation Mapping</span></div>
-    </div>
-    <div class="pcard reveal d3">
-      <div class="ptag">WebGL · Graphics</div><div class="pscore">CS 440</div>
-      <div class="ptitle">Procedural Planet Renderer</div>
-      <p class="pdesc">WebGL 2.0 planet renderer with simplex-noise terrain, Blinn-Phong shading, PCF shadow mapping, bloom post-processing, procedural forest placement, and FPS-style pointer-lock camera.</p>
-      <div class="ptech"><span class="ptag2">WebGL 2.0</span><span class="ptag2">GLSL</span><span class="ptag2">Shadow Maps</span><span class="ptag2">Bloom</span></div>
-    </div>
-    <div class="pcard reveal d4">
-      <div class="ptag">CNNs · Signal Processing</div><div class="pscore">F1 &gt;95%</div>
-      <div class="ptitle">Deep Learning for Bearing Fault Classification</div>
-      <p class="pdesc">Trained and optimized CNNs to classify distinct bearing fault patterns across time and frequency signal representations under severe noise conditions.</p>
-      <div class="ptech"><span class="ptag2">CNNs</span><span class="ptag2">Signal Processing</span><span class="ptag2">TensorFlow</span><span class="ptag2">Python</span></div>
-    </div>
-    <div class="pcard reveal d5">
-      <div class="ptag">Segmentation · Zero-Shot</div><div class="pscore">IoU 75%</div>
-      <div class="ptitle">Crack Segmentation via Multichannel Fusion</div>
-      <p class="pdesc">Zero-shot pipeline fusing Intensity, Saliency, and Hessian Line-like feature maps to isolate structural cracks without any GPU training. Benchmarks favorably against supervised ML models.</p>
-      <div class="ptech"><span class="ptag2">OpenCV</span><span class="ptag2">Zero-Shot</span><span class="ptag2">Hessian</span><span class="ptag2">Segmentation</span></div>
-    </div>
-    <div class="pcard reveal d6">
-      <div class="ptag">LLMs · Automation</div><div class="pscore">1.25 hr/100 saved</div>
-      <div class="ptitle">Llama 3 Email Outreach Pipeline</div>
-      <p class="pdesc">End-to-end pipeline using Llama 3 to generate and dispatch personalized outreach emails for NGO campaigns, cutting manual effort dramatically at scale.</p>
-      <div class="ptech"><span class="ptag2">Llama 3</span><span class="ptag2">Node.js</span><span class="ptag2">Express</span><span class="ptag2">Prompt Engineering</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- SKILLS -->
-<section id="skills">
-  <div class="sec-head reveal"><span class="sec-num">04</span><h2 class="sec-title">Skills</h2><div class="sec-rule"></div></div>
-  <div class="sgrid">
-    <div class="sgroup reveal d1"><div class="sgroup-title">Machine Learning</div><div class="sitems"><span class="sitem">PyTorch</span><span class="sitem">TensorFlow</span><span class="sitem">Keras</span><span class="sitem">Hugging Face</span><span class="sitem">Scikit-learn</span><span class="sitem">Pandas</span><span class="sitem">NumPy</span></div></div>
-    <div class="sgroup reveal d2"><div class="sgroup-title">Visual Computing</div><div class="sitems"><span class="sitem">OpenCV</span><span class="sitem">WebGL 2.0</span><span class="sitem">OpenGL</span><span class="sitem">GLSL</span><span class="sitem">Blender</span><span class="sitem">Gazebo</span></div></div>
-    <div class="sgroup reveal d3"><div class="sgroup-title">Programming</div><div class="sitems"><span class="sitem">Python</span><span class="sitem">C++</span><span class="sitem">C</span><span class="sitem">MATLAB</span><span class="sitem">JavaScript</span><span class="sitem">Node.js</span><span class="sitem">Vue.js</span><span class="sitem">MySQL</span></div></div>
-    <div class="sgroup reveal d4"><div class="sgroup-title">Tools &amp; Platforms</div><div class="sitems"><span class="sitem">Git</span><span class="sitem">Linux</span><span class="sitem">LaTeX</span><span class="sitem">ROS2</span><span class="sitem">Docker</span><span class="sitem">Photoshop</span><span class="sitem">Illustrator</span></div></div>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section id="contact">
-  <div class="sec-head reveal"><span class="sec-num">05</span><h2 class="sec-title">Contact</h2><div class="sec-rule"></div></div>
-  <div class="contact-grid">
-    <div class="reveal d1">
-      <div class="contact-intro"><p>Open to research collaborations, graduate program discussions, and compelling problems in computer vision and machine learning. Based in Karachi — available globally and remotely.</p></div>
-      <div class="clinks">
-        <a href="mailto:zuhair.abbas2503@gmail.com" class="clink">
-          <div class="clink-body"><div class="clink-label">Email</div><div class="clink-val">zuhair.abbas2503@gmail.com</div></div>
-          <span class="clink-arr">→</span>
-        </a>
-        <a href="https://github.com/zuhairs-account" target="_blank" class="clink">
-          <div class="clink-body"><div class="clink-label">GitHub</div><div class="clink-val">github.com/zuhairs-account</div></div>
-          <span class="clink-arr">→</span>
-        </a>
-        <a href="https://linkedin.com/in/zuhairabbas" target="_blank" class="clink">
-          <div class="clink-body"><div class="clink-label">LinkedIn</div><div class="clink-val">linkedin.com/in/zuhairabbas</div></div>
-          <span class="clink-arr">→</span>
-        </a>
-      </div>
-    </div>
-    <div class="contact-glyph reveal d2">
-      <canvas class="cg-canvas" id="cglyph"></canvas>
-      <div class="cg-text">
-        <div class="cg-letter">ZA</div>
-        <div class="cg-motto">Perception without interpretation is noise. Intelligence is the act of making meaning.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
+<div id="hub">
+  <div class="node" id="n-about"    style="left:36%;top:34%"><div class="node-box"><div class="node-n">01</div><div class="node-l">about</div><div class="node-sub">dive in</div></div></div>
+  <div class="node" id="n-exp"      style="left:67%;top:28%"><div class="node-box"><div class="node-n">02</div><div class="node-l">experience</div><div class="node-sub">dive in</div></div></div>
+  <div class="node" id="n-projects" style="left:25%;top:57%"><div class="node-box"><div class="node-n">03</div><div class="node-l">projects</div><div class="node-sub">dive in</div></div></div>
+  <div class="node" id="n-skills"   style="left:65%;top:63%"><div class="node-box"><div class="node-n">04</div><div class="node-l">skills</div><div class="node-sub">dive in</div></div></div>
+  <div class="node" id="n-contact"  style="left:50%;top:75%"><div class="node-box"><div class="node-n">05</div><div class="node-l">contact</div><div class="node-sub">dive in</div></div></div>
 </div>
 
-<footer><p>© 2026 Zuhair Abbas &nbsp;·&nbsp; Karachi, Pakistan &nbsp;·&nbsp; Designed &amp; built by hand</p></footer>
+<div id="hero">
+  <h1>zuhair <span>abbas</span></h1>
+  <p>computer vision · machine learning · visual computing</p>
+  <small>navigate the space</small>
+</div>
+
+<button id="back">← return</button>
+
+<div id="overlay">
+  <!-- panels injected by JS -->
+</div>
+
+
+
 
 <script>
-// ── CURSOR ─────────────────────────────────────────────────────────────────────
-const cur = document.getElementById('cur');
-const ring = document.getElementById('cur-ring');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
-(function lerp(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(lerp);})();
-document.querySelectorAll('a,button,.pcard,.sitem').forEach(el=>{
-  el.addEventListener('mouseenter',()=>document.body.classList.add('cl'));
-  el.addEventListener('mouseleave',()=>document.body.classList.remove('cl'));
-});
+// renderer.js  — WebGL2, true 3D, depth-of-field particles, angelic creature
+'use strict';
 
-// ── WEBGL BACKGROUND ────────────────────────────────────────────────────────────
-(function(){
-  const canvas = document.getElementById('bg');
-  const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-  if(!gl) return;
+// ─── Mat4 helpers ─────────────────────────────────────────────────────────────
+function m4()        { return new Float32Array(16); }
+function ident()     { const m=m4(); m[0]=m[5]=m[10]=m[15]=1; return m; }
+function mul(a,b)    { const o=m4(); for(let r=0;r<4;r++) for(let c=0;c<4;c++) for(let k=0;k<4;k++) o[r*4+c]+=a[r*4+k]*b[k*4+c]; return o; }
+function persp(fov,asp,n,f){ const m=m4(),t=1/Math.tan(fov*.5),d=f-n; m[0]=t/asp;m[5]=t;m[10]=-(f+n)/d;m[11]=-1;m[14]=-2*f*n/d; return m; }
+function tr(x,y,z)   { const m=ident(); m[12]=x;m[13]=y;m[14]=z; return m; }
+function rx(a)       { const m=ident(),c=Math.cos(a),s=Math.sin(a); m[5]=c;m[6]=-s;m[9]=s;m[10]=c; return m; }
+function ry(a)       { const m=ident(),c=Math.cos(a),s=Math.sin(a); m[0]=c;m[2]=s;m[8]=-s;m[10]=c; return m; }
+function sc(x,y,z)   { const m=ident(); m[0]=x;m[5]=y;m[10]=z; return m; }
 
-  let W, H;
-  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;gl.viewport(0,0,W,H);}
-  resize(); window.addEventListener('resize',resize);
+// ─── Deterministic RNG ────────────────────────────────────────────────────────
+function rng(seed) { const s=Math.sin(seed*127.1+311.7)*43758.5453; return s-Math.floor(s); }
 
-  // ── Vertex Shader ─
-  const VS = `
-    attribute vec3 aPos;
-    attribute float aAlpha;
-    uniform mat4 uMVP;
-    uniform float uTime;
-    varying float vAlpha;
-    varying vec3 vPos;
-    void main(){
-      vec3 p = aPos;
-      // gentle float
-      p.y += sin(uTime * 0.4 + aPos.x * 0.3) * 0.018;
-      p.x += cos(uTime * 0.3 + aPos.z * 0.4) * 0.015;
-      vAlpha = aAlpha;
-      vPos = p;
-      gl_Position = uMVP * vec4(p, 1.0);
-      gl_PointSize = 2.0;
+// ─── Section definitions ──────────────────────────────────────────────────────
+window.SECTIONS=[
+  {id:'about',    camZ:40,  color:[1.00,0.24,0.24]},
+  {id:'exp',      camZ:90,  color:[0.24,0.55,1.00]},
+  {id:'projects', camZ:140, color:[0.24,0.85,0.50]},
+  {id:'skills',   camZ:190, color:[0.64,0.32,1.00]},
+  {id:'contact',  camZ:240, color:[1.00,1.00,1.00]},
+];
+
+// ─── Geometry ─────────────────────────────────────────────────────────────────
+function ringVerts(r,segs) {
+  const v=new Float32Array((segs+1)*3);
+  for(let i=0;i<=segs;i++){const a=(i/segs)*Math.PI*2;v[i*3]=Math.cos(a)*r;v[i*3+1]=Math.sin(a)*r;}
+  return v;
+}
+
+function buildCreature() {
+  // spine
+  const SPTS=36, sv=[];
+  for(let i=0;i<=SPTS;i++){
+    const t=i/SPTS, a=t*Math.PI*2.0, r=0.72*(1-t*.42);
+    sv.push(Math.cos(a)*r, t*3.2-1.6, Math.sin(a)*r*.22);
+  }
+  // halos — 5 tilted rings
+  const hv=[], hm=[];
+  const HR=[{cy:-1.2,r:.52,tx:.28},{cy:-.45,r:.82,tx:-.18},{cy:.2,r:1.0,tx:.38},{cy:.85,r:.65,tx:-.14},{cy:1.38,r:.38,tx:.22}];
+  const HSEGS=52;
+  for(const h of HR){
+    const s0=hv.length/3;
+    for(let i=0;i<=HSEGS;i++){
+      const a=(i/HSEGS)*Math.PI*2, cx=Math.cos(a)*h.r, cy2=Math.sin(a)*h.r;
+      hv.push(cx, h.cy+cy2*Math.sin(h.tx), cy2*Math.cos(h.tx)*.18);
     }
-  `;
-  // ── Fragment Shader ─
-  const FS = `
-    precision mediump float;
-    varying float vAlpha;
-    varying vec3 vPos;
-    uniform float uTime;
-    uniform vec3 uColor0;
-    uniform vec3 uColor1;
-    void main(){
-      float t = vPos.y * 0.5 + 0.5;
-      vec3 col = mix(uColor0, uColor1, t);
-      gl_FragColor = vec4(col, vAlpha);
+    hm.push({s:s0,n:HSEGS+1});
+  }
+  // tendrils
+  const tv=[], tm=[];
+  const NT=10, TP=20;
+  for(let ti=0;ti<NT;ti++){
+    const ba=(ti/NT)*Math.PI*2, by=(ti%5-2)*.55, s0=tv.length/3;
+    for(let i=0;i<=TP;i++){
+      const s=i/TP, curl=s*s*Math.PI*2.2, r2=(1-s)*(.75+rng(ti)*.55);
+      tv.push(Math.cos(ba+curl)*r2, by-s*1.7-s*s*.4, Math.sin(ba+curl)*r2*.16);
     }
-  `;
-
-  function compile(type, src){
-    const s = gl.createShader(type);
-    gl.shaderSource(s,src); gl.compileShader(s);
-    return s;
+    tm.push({s:s0,n:TP+1});
   }
-  const prog = gl.createProgram();
-  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
-  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
-  gl.linkProgram(prog); gl.useProgram(prog);
+  return {
+    spine:    new Float32Array(sv), sN: SPTS+1,
+    halos:    new Float32Array(hv), hm,
+    tendrils: new Float32Array(tv), tm,
+  };
+}
 
-  const aPos   = gl.getAttribLocation(prog,'aPos');
-  const aAlpha = gl.getAttribLocation(prog,'aAlpha');
-  const uMVP   = gl.getUniformLocation(prog,'uMVP');
-  const uTime  = gl.getUniformLocation(prog,'uTime');
-  const uC0    = gl.getUniformLocation(prog,'uColor0');
-  const uC1    = gl.getUniformLocation(prog,'uColor1');
-
-  // ── Math helpers ─────────────────────────────────────────────────────────────
-  function mat4mul(a,b){
-    const o=new Float32Array(16);
-    for(let r=0;r<4;r++) for(let c=0;c<4;c++) for(let k=0;k<4;k++) o[r*4+c]+=a[r*4+k]*b[k*4+c];
-    return o;
-  }
-  function perspective(fov,asp,near,far){
-    const f=1/Math.tan(fov/2), nd=far-near, m=new Float32Array(16);
-    m[0]=f/asp;m[5]=f;m[10]=-(far+near)/nd;m[11]=-1;m[14]=-2*far*near/nd;return m;
-  }
-  function identity(){const m=new Float32Array(16);m[0]=m[5]=m[10]=m[15]=1;return m;}
-  function translate(x,y,z){const m=identity();m[12]=x;m[13]=y;m[14]=z;return m;}
-  function rotY(a){const c=Math.cos(a),s=Math.sin(a),m=identity();m[0]=c;m[2]=s;m[8]=-s;m[10]=c;return m;}
-  function rotX(a){const c=Math.cos(a),s=Math.sin(a),m=identity();m[5]=c;m[6]=-s;m[9]=s;m[10]=c;return m;}
-
-  // ── Geometry generators ─────────────────────────────────────────────────────
-
-  // Icosahedron vertices / edges (indices)
-  const PHI = (1+Math.sqrt(5))/2;
-  function buildIco(){
-    const verts = [
-      [-1, PHI, 0],[1,PHI,0],[-1,-PHI,0],[1,-PHI,0],
-      [0,-1,PHI],[0,1,PHI],[0,-1,-PHI],[0,1,-PHI],
-      [PHI,0,-1],[PHI,0,1],[-PHI,0,-1],[-PHI,0,1]
-    ];
-    const len = Math.sqrt(1+PHI*PHI);
-    const vn = verts.map(v=>[v[0]/len, v[1]/len, v[2]/len]);
-
-    const faces = [
-      [0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],
-      [1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],
-      [3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],
-      [4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]
-    ];
-
-    let pos=[], edges=[];
-    faces.forEach(f=>{
-      [f[0],f[1],f[1],f[2],f[2],f[0]].forEach(i=>edges.push(...vn[i]));
-    });
-    return edges;
-  }
-
-  // Low-poly grid of triangles — like a flat PS2 terrain
-  function buildGrid(sz, divs, yFn){
-    const pts = [];
-    const step = sz / divs;
-    for(let i=0;i<divs;i++) for(let j=0;j<divs;j++){
-      const x0=(i-divs/2)*step, x1=x0+step;
-      const z0=(j-divs/2)*step, z1=z0+step;
-      const y00=yFn(x0,z0),y10=yFn(x1,z0),y01=yFn(x0,z1),y11=yFn(x1,z1);
-      // Triangle 1
-      pts.push(x0,y00,z0, x1,y10,z0, x0,y01,z1);
-      // Triangle 2
-      pts.push(x1,y10,z0, x1,y11,z1, x0,y01,z1);
-    }
-    return pts;
-  }
-
-  // Build wireframe of grid (edges only)
-  function triWireframe(triPts){
-    const edges=[];
-    for(let i=0;i<triPts.length;i+=9){
-      const a=[triPts[i],triPts[i+1],triPts[i+2]];
-      const b=[triPts[i+3],triPts[i+4],triPts[i+5]];
-      const c=[triPts[i+6],triPts[i+7],triPts[i+8]];
-      edges.push(...a,...b, ...b,...c, ...c,...a);
-    }
-    return edges;
-  }
-
-  // Axis-aligned box wireframe
-  function buildBox(cx,cy,cz,rx,ry,rz){
-    const x0=cx-rx,x1=cx+rx,y0=cy-ry,y1=cy+ry,z0=cz-rz,z1=cz+rz;
-    return [
-      x0,y0,z0, x1,y0,z0,  x1,y0,z0, x1,y1,z0,  x1,y1,z0, x0,y1,z0,  x0,y1,z0, x0,y0,z0,
-      x0,y0,z1, x1,y0,z1,  x1,y0,z1, x1,y1,z1,  x1,y1,z1, x0,y1,z1,  x0,y1,z1, x0,y0,z1,
-      x0,y0,z0, x0,y0,z1,  x1,y0,z0, x1,y0,z1,  x1,y1,z0, x1,y1,z1,  x0,y1,z0, x0,y1,z1
-    ];
-  }
-
-  // ── Scene objects ──────────────────────────────────────────────────────────
-
-  // 1. Floating icosahedra
-  const ICO_VERTS = buildIco(); // edges for one unit ico
-
-  const ICO_COUNT = 12;
-  const icoData = [];
-  for(let i=0;i<ICO_COUNT;i++){
-    const r = 1.2 + Math.random()*2.2;
-    const th = Math.random()*Math.PI*2;
-    const ph = (Math.random()-.5)*Math.PI*.8;
-    icoData.push({
-      x: r*Math.cos(ph)*Math.cos(th),
-      y: r*Math.sin(ph) + (Math.random()-.5)*.8,
-      z: r*Math.cos(ph)*Math.sin(th),
-      sx: .04+Math.random()*.12,
-      sy: .04+Math.random()*.12,
-      sz: .04+Math.random()*.12,
-      phase: Math.random()*Math.PI*2,
-      speed: .18+Math.random()*.22,
-      alpha: .15+Math.random()*.35,
-    });
-  }
-
-  // 2. Flat terrain grid (low-poly PS2 floor)
-  function terrainY(x,z){ return (Math.sin(x*1.1)*.04+Math.cos(z*.9)*.03+Math.sin((x+z)*.7)*.02)*.8; }
-  const gridPts = buildGrid(4.0, 22, terrainY);
-  const gridEdges = triWireframe(gridPts);
-
-  // 3. Floating boxes (Bloxorz energy)
-  const BOX_COUNT = 8;
-  const boxObjs = [];
-  for(let i=0;i<BOX_COUNT;i++){
-    const ang = (i/BOX_COUNT)*Math.PI*2;
-    const r = 1.6+Math.random()*.9;
-    boxObjs.push({
-      x: r*Math.cos(ang), y: (Math.random()-.5)*1.4, z: r*Math.sin(ang),
-      rx: Math.random()*.4, ry: Math.random()*.4, rz: Math.random()*.3,
-      sx: .06+Math.random()*.14, sy: .04+Math.random()*.1, sz: .06+Math.random()*.14,
-      phase: Math.random()*Math.PI*2,
-      speed: .12+Math.random()*.18,
-      alpha: .12+Math.random()*.25,
-    });
-  }
-
-  // 4. Central "nucleus" — concentric rings (flOw organism feel)
-  function buildRing(r, segs, tilt){
-    const pts=[];
-    for(let i=0;i<=segs;i++){
-      const a=(i/segs)*Math.PI*2;
-      const a2=((i+1)/segs)*Math.PI*2;
-      const x0=r*Math.cos(a), y0=r*Math.sin(a)*Math.sin(tilt), z0=r*Math.sin(a)*Math.cos(tilt);
-      const x1=r*Math.cos(a2), y1=r*Math.sin(a2)*Math.sin(tilt), z1=r*Math.sin(a2)*Math.cos(tilt);
-      pts.push(x0,y0,z0, x1,y1,z1);
-    }
-    return pts;
-  }
-  const RING_COUNT = 5;
-  const rings = [];
-  for(let i=0;i<RING_COUNT;i++){
-    rings.push({ pts: buildRing(.18+i*.06, 64, (i/RING_COUNT)*Math.PI), alpha:.08+i*.04, speed:.04+i*.012, phase:i*.7 });
-  }
-
-  // 5. Scattered points
-  const PT_COUNT = 140;
-  const ptPos=[], ptAlpha=[];
-  for(let i=0;i<PT_COUNT;i++){
-    const r=.5+Math.random()*3.5;
-    const th=Math.random()*Math.PI*2, ph=(Math.random()-.5)*Math.PI;
-    ptPos.push(r*Math.cos(ph)*Math.cos(th), r*Math.sin(ph), r*Math.cos(ph)*Math.sin(th));
-    ptAlpha.push(.05+Math.random()*.25);
-  }
-
-  // ── GPU Buffers ─────────────────────────────────────────────────────────────
-  function mkBuf(data){
-    const b=gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER,b);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.DYNAMIC_DRAW);
-    return b;
-  }
-
-  const icoVBuf = mkBuf(ICO_VERTS);
-  const gridBuf = mkBuf(gridEdges);
-  const ptBuf   = mkBuf(ptPos);
-  const ptABuf  = mkBuf(ptAlpha);
-
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-
-  // ── Draw helpers ─────────────────────────────────────────────────────────────
-  function setMVP(model){
-    const camDist = 3.8;
-    const proj = perspective(1.0, W/H, 0.1, 100);
-    const view = mat4mul(translate(0,-.3,-camDist), mat4mul(rotX(.18), identity()));
-    const mvp = mat4mul(proj, mat4mul(view, model));
-    gl.uniformMatrix4fv(uMVP, false, mvp);
-  }
-
-  function drawLines(buf, count, model, alpha){
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(aPos);
-    gl.disableVertexAttribArray(aAlpha);
-    gl.vertexAttrib1f(aAlpha, alpha);
-    setMVP(model);
-    gl.drawArrays(gl.LINES, 0, count);
-  }
-
-  function drawPoints(buf, alphaBuf, count, model){
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(aPos);
-    gl.bindBuffer(gl.ARRAY_BUFFER, alphaBuf);
-    gl.vertexAttribPointer(aAlpha, 1, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(aAlpha);
-    setMVP(model);
-    gl.drawArrays(gl.POINTS, 0, count);
-  }
-
-  let t = 0;
-  const ICO_VCOUNT = ICO_VERTS.length/3;
-  const GRID_VCOUNT = gridEdges.length/3;
-
-  function rotXYZ(rx,ry,rz){ return mat4mul(rotX(rx), mat4mul(rotY(ry), identity())); }
-
-  // ── Render loop ──────────────────────────────────────────────────────────────
-  function draw(){
-    t += 0.008;
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform1f(uTime, t);
-
-    // Ice blue → warm off-white
-    gl.uniform3f(uC0, 0.48, 0.82, 1.0);
-    gl.uniform3f(uC1, 0.90, 0.88, 0.82);
-
-    const globalRotM = rotY(t * .08);
-
-    // Grid (terrain floor)
-    {
-      const m = mat4mul(globalRotM, mat4mul(translate(0,-1.1,0), rotX(.15)));
-      drawLines(gridBuf, GRID_VCOUNT, m, .06);
-    }
-
-    // Icosahedra
-    icoData.forEach((ico,i)=>{
-      const st = t * ico.speed + ico.phase;
-      const oy = Math.sin(st)*.06;
-      const local = mat4mul(translate(ico.x, ico.y+oy, ico.z), mat4mul(rotY(t*ico.speed*.7+i), rotX(t*ico.speed*.4+i)));
-      const s = ico.sx;
-      const scale = new Float32Array([s,0,0,0, 0,ico.sy,0,0, 0,0,ico.sz,0, 0,0,0,1]);
-      const m = mat4mul(globalRotM, mat4mul(local, scale));
-      drawLines(icoVBuf, ICO_VCOUNT, m, ico.alpha);
-    });
-
-    // Boxes
-    boxObjs.forEach((bx,i)=>{
-      const st = t * bx.speed + bx.phase;
-      const oy = Math.sin(st)*.05;
-      const edges = buildBox(0,0,0,bx.sx,bx.sy,bx.sz);
-      const buf = mkBuf(edges);
-      const local = mat4mul(translate(bx.x, bx.y+oy, bx.z), rotXYZ(bx.rx+t*bx.speed*.4, bx.ry+t*bx.speed*.3, bx.rz));
-      const m = mat4mul(globalRotM, local);
-      drawLines(buf, edges.length/3, m, bx.alpha);
-      gl.deleteBuffer(buf);
-    });
-
-    // Rings (nucleus)
-    rings.forEach((rg,i)=>{
-      const buf = mkBuf(rg.pts);
-      const m = mat4mul(rotY(t*rg.speed+rg.phase), rotX(t*rg.speed*.5));
-      drawLines(buf, rg.pts.length/3, m, rg.alpha*(0.7+0.3*Math.sin(t*.5+i)));
-      gl.deleteBuffer(buf);
-    });
-
-    // Scatter points
-    drawPoints(ptBuf, ptABuf, PT_COUNT, globalRotM);
-
-    requestAnimationFrame(draw);
-  }
-
-  gl.clearColor(0,0,0,0);
-  draw();
-})();
-
-// ── CONTACT GLYPH MINI-CANVAS ─────────────────────────────────────────────────
-(function(){
-  const c = document.getElementById('cglyph');
-  const ctx = c.getContext('2d');
-  const parent = c.parentElement;
-  function resize(){ c.width=parent.offsetWidth; c.height=parent.offsetHeight; }
-  resize();
-  window.addEventListener('resize',resize);
-  let t=0;
-  const NODES=7, LINES=[];
-  const pts=Array.from({length:NODES},(_,i)=>({
-    x:.5+Math.cos(i/NODES*Math.PI*2)*.28,
-    y:.5+Math.sin(i/NODES*Math.PI*2)*.28,
-    phase:i/NODES*Math.PI*2
+function buildOrganisms() {
+  return Array.from({length:26},(_, i)=>({
+    x: (rng(i*7  )-.5)*95,
+    y: (rng(i*7+1)-.5)*48,
+    z: -(rng(i*7+2)*290+5),
+    color: (()=>{
+      for(const s of window.SECTIONS) if(-i*11.5>-(s.camZ+35)&&-i*11.5<-(s.camZ-35)) return s.color;
+      return [1,.22,.22];
+    })(),
+    rings: Array.from({length:2+Math.floor(rng(i)*3)},(_,r)=>(.28+r*.24+rng(i*13+r)*.28)),
   }));
-  for(let i=0;i<NODES;i++) for(let j=i+1;j<NODES;j++) if(Math.random()<.45) LINES.push([i,j]);
-  function draw(){
-    t+=.008; c.width=parent.offsetWidth; c.height=parent.offsetHeight;
-    ctx.clearRect(0,0,c.width,c.height);
-    const W=c.width, H=c.height;
-    LINES.forEach(([a,b])=>{
-      const pa=pts[a], pb=pts[b];
-      const ax=W*(pa.x+Math.cos(t*.3+pa.phase)*.03);
-      const ay=H*(pa.y+Math.sin(t*.4+pa.phase)*.03);
-      const bx=W*(pb.x+Math.cos(t*.3+pb.phase)*.03);
-      const by=H*(pb.y+Math.sin(t*.4+pb.phase)*.03);
-      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by);
-      ctx.strokeStyle='rgba(126,207,255,0.12)'; ctx.lineWidth=.7; ctx.stroke();
-    });
-    pts.forEach(p=>{
-      const x=W*(p.x+Math.cos(t*.3+p.phase)*.03);
-      const y=H*(p.y+Math.sin(t*.4+p.phase)*.03);
-      ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2);
-      ctx.fillStyle='rgba(126,207,255,0.3)'; ctx.fill();
-    });
-    requestAnimationFrame(draw);
+}
+
+function buildParticles(n=750) {
+  const v=new Float32Array(n*3);
+  for(let i=0;i<n;i++){v[i*3]=(rng(i*3)-.5)*130;v[i*3+1]=(rng(i*3+1)-.5)*65;v[i*3+2]=-rng(i*3+2)*330;}
+  return v;
+}
+
+// ─── Shaders ─────────────────────────────────────────────────────────────────
+
+const LINE_VS=`#version 300 es
+precision highp float;
+in vec3 aPos;
+uniform mat4 uMVP;
+uniform float uCamZ;
+out float vFog;
+void main(){
+  vec4 clip=uMVP*vec4(aPos,1.0);
+  gl_Position=clip;
+  float ndcZ=clip.z/clip.w;
+  float distFog=1.0-smoothstep(0.15,0.97,ndcZ);
+  vFog=distFog;
+}`;
+
+const LINE_FS=`#version 300 es
+precision mediump float;
+in float vFog;
+uniform vec4 uColor;
+out vec4 fc;
+void main(){fc=vec4(uColor.rgb,uColor.a*vFog);}`;
+
+const ORG_VS=`#version 300 es
+precision highp float;
+in vec3 aPos;
+uniform mat4 uModel;
+uniform mat4 uVP;
+uniform float uCamZ;
+out float vFog;
+void main(){
+  vec4 world=uModel*vec4(aPos,1.0);
+  vec4 clip=uVP*world;
+  gl_Position=clip;
+  float ndcFog=1.0-smoothstep(0.15,0.97,clip.z/clip.w);
+  float dist=abs(world.z+uCamZ);
+  float df=1.0-smoothstep(8.0,210.0,dist);
+  vFog=ndcFog*df;
+}`;
+
+const ORG_FS=`#version 300 es
+precision mediump float;
+in float vFog;
+uniform vec3 uColor;
+out vec4 fc;
+void main(){fc=vec4(uColor*1.35,0.55*vFog);}`;
+
+const PT_VS=`#version 300 es
+precision highp float;
+in vec3 aPos;
+uniform mat4 uVP;
+uniform float uT;
+uniform float uCamZ;
+uniform vec3 uAccent;
+out float vAlpha;
+out vec3  vCol;
+out float vBlur;
+void main(){
+  vec3 p=aPos;
+  p.x+=sin(uT*.13+aPos.z*.06)*.85;
+  p.y+=cos(uT*.10+aPos.x*.08)*.50;
+  vec4 clip=uVP*vec4(p,1.0);
+  gl_Position=clip;
+  float dist=abs(p.z+uCamZ);
+  float focal=28.0;
+  float blur=clamp(abs(dist-focal)/85.0,0.0,1.0);
+  float szBase=mix(1.4,5.8,blur)+(1.0-blur)*1.2;
+  gl_PointSize=max(szBase*(280.0/max(-clip.z,1.0)),0.5);
+  float ndcFog=1.0-smoothstep(0.15,0.97,clip.z/clip.w);
+  float df=1.0-smoothstep(18.0,290.0,dist);
+  vAlpha=df*ndcFog*mix(0.78,0.11,blur);
+  vBlur=blur;
+  vCol=mix(vec3(0.72,0.84,1.0),uAccent,0.38*df);
+}`;
+
+const PT_FS=`#version 300 es
+precision mediump float;
+in float vAlpha;
+in vec3  vCol;
+in float vBlur;
+out vec4 fc;
+void main(){
+  vec2 pc=gl_PointCoord-.5;
+  float r=length(pc);
+  float sig=mix(.21,.48,vBlur);
+  float c=exp(-(r*r)/(2.0*sig*sig));
+  if(c<.01)discard;
+  fc=vec4(vCol,vAlpha*c);
+}`;
+
+// ─── Renderer ─────────────────────────────────────────────────────────────────
+class Renderer {
+  constructor(canvas) {
+    this.canvas=canvas;
+    const gl=canvas.getContext('webgl2',{antialias:true,alpha:false});
+    if(!gl) throw new Error('WebGL2 unavailable');
+    this.gl=gl;
+    this.W=this.H=0;
+    this.t=0;
+    this.camZ=6;   this.camZT=6;
+    this.tilt=0;   this.tiltT=0;
+    this.accent=[.7,.85,1]; this.accentT=[.7,.85,1];
+    this.mx=0;     this.my=0;
   }
-  draw();
+
+  async init() {
+    const gl=this.gl;
+    this._lp=this._prog(LINE_VS,LINE_FS);
+    this._op=this._prog(ORG_VS, ORG_FS);
+    this._pp=this._prog(PT_VS,  PT_FS);
+
+    const c=buildCreature();
+    this._cr={
+      sBuf:this._vb(c.spine),  sN:c.sN,
+      hBuf:this._vb(c.halos),  hm:c.hm,
+      tBuf:this._vb(c.tendrils),tm:c.tm,
+    };
+
+    this._orgs=buildOrganisms();
+    this._orgRingBufs=this._orgs.map(o=>
+      o.rings.map(r=>({b:this._vb(ringVerts(r,36)),n:37}))
+    );
+
+    const pts=buildParticles(750);
+    this._ptB=this._vb(pts); this._ptN=pts.length/3;
+
+    const sr=ringVerts(14,96); this._srB=this._vb(sr); this._srN=97;
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA,gl.ONE);
+    gl.disable(gl.DEPTH_TEST);
+    gl.clearColor(.008,.020,.063,1);
+
+    document.addEventListener('mousemove',e=>{
+      this.mx=(e.clientX/window.innerWidth -.5)*2;
+      this.my=(e.clientY/window.innerHeight-.5)*2;
+    });
+    window.addEventListener('resize',()=>this._rsz());
+    this._rsz();
+    return this;
+  }
+
+  _rsz(){this.W=this.canvas.width=innerWidth;this.H=this.canvas.height=innerHeight;this.gl.viewport(0,0,this.W,this.H);}
+
+  _vb(data){const gl=this.gl,b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);return b;}
+
+  _prog(vs,fs){
+    const gl=this.gl;
+    const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);
+      if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh;};
+    const p=gl.createProgram();
+    gl.attachShader(p,mk(gl.VERTEX_SHADER,vs));
+    gl.attachShader(p,mk(gl.FRAGMENT_SHADER,fs));
+    gl.linkProgram(p);
+    if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
+    return p;
+  }
+
+  setAccent(rgb){this.accentT=rgb;}
+  setCamZ(z,tilt=0){this.camZT=z;this.tiltT=tilt;}
+
+  frame(dt){
+    const gl=this.gl; this.t+=dt; const t=this.t;
+    this.camZ +=(this.camZT  -this.camZ )*.026;
+    this.tilt +=(this.tiltT  -this.tilt )*.026;
+    for(let i=0;i<3;i++) this.accent[i]+=(this.accentT[i]-this.accent[i])*.04;
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    const P=persp(1.1,this.W/this.H,.5,500);
+    const V=mul(mul(rx(this.my*.055+this.tilt),ry(this.mx*.07)),tr(0,0,-this.camZ));
+    const VP=mul(P,V);
+
+    this._drawOrgs(VP,t);
+    this._drawSecMarkers(VP,t);
+    this._drawPts(VP,t);
+    this._drawCreature(VP,t);
+  }
+
+  // ── organism rings ──────────────────────────────────────────────────────────
+  _drawOrgs(VP,t){
+    const gl=this.gl,p=this._op;
+    gl.useProgram(p);
+    const vpLoc=gl.getUniformLocation(p,'uVP');
+    const mLoc =gl.getUniformLocation(p,'uModel');
+    const cLoc =gl.getUniformLocation(p,'uColor');
+    const czLoc=gl.getUniformLocation(p,'uCamZ');
+    const posLoc=gl.getAttribLocation(p,'aPos');
+    gl.uniformMatrix4fv(vpLoc,false,VP);
+    gl.uniform1f(czLoc,this.camZ);
+
+    this._orgs.forEach((o,i)=>{
+      const spin=t*(.075+i*.011)+i*1.4;
+      const model=mul(tr(o.x,o.y+Math.sin(t*.28+i*.85)*.38,o.z),mul(ry(spin),rx(Math.sin(t*.42+i)*.12)));
+      gl.uniformMatrix4fv(mLoc,false,model);
+      gl.uniform3f(cLoc,...o.color);
+      this._orgRingBufs[i].forEach(rb=>{
+        gl.bindBuffer(gl.ARRAY_BUFFER,rb.b);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc,3,gl.FLOAT,false,0,0);
+        gl.drawArrays(gl.LINE_STRIP,0,rb.n);
+      });
+    });
+  }
+
+  // ── section portal rings ────────────────────────────────────────────────────
+  _drawSecMarkers(VP,t){
+    for(const s of window.SECTIONS){
+      const pulse=.065+.032*Math.sin(t*.5+s.camZ*.01);
+      // outer
+      this._lines(this._srB,this._srN, mul(VP,mul(tr(0,0,-s.camZ),rx(Math.PI/2))), s.color, pulse);
+      // inner smaller
+      this._lines(this._srB,this._srN, mul(VP,mul(tr(0,0,-s.camZ),mul(rx(Math.PI/2),sc(.55,.55,1)))), s.color, pulse*.5);
+    }
+  }
+
+  // ── particles ───────────────────────────────────────────────────────────────
+  _drawPts(VP,t){
+    const gl=this.gl,p=this._pp;
+    gl.useProgram(p);
+    gl.bindBuffer(gl.ARRAY_BUFFER,this._ptB);
+    const loc=gl.getAttribLocation(p,'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+    gl.uniformMatrix4fv(gl.getUniformLocation(p,'uVP'),false,VP);
+    gl.uniform1f(gl.getUniformLocation(p,'uT'),t);
+    gl.uniform1f(gl.getUniformLocation(p,'uCamZ'),this.camZ);
+    gl.uniform3f(gl.getUniformLocation(p,'uAccent'),...this.accent);
+    gl.drawArrays(gl.POINTS,0,this._ptN);
+  }
+
+  // ── creature ────────────────────────────────────────────────────────────────
+  _drawCreature(VP,t){
+    const cr=this._cr;
+    const swX=Math.sin(t*.58)*.52, swY=Math.cos(t*.43)*.28;
+    const worldZ=-(this.camZ-8);
+    const model=mul(tr(swX,swY,worldZ),mul(ry(t*.42),rx(Math.sin(t*.33)*.17)));
+    const MVP=mul(VP,model);
+
+    // spine — two passes (bright + soft glow)
+    this._lines(cr.sBuf,cr.sN,MVP,[.92,.96,1.0],.82);
+    this._lines(cr.sBuf,cr.sN,MVP,[.6,.82,1.0],.22);
+
+    // halos
+    cr.hm.forEach((h,i)=>{
+      const a=.26+.13*Math.sin(t*1.05+i*.85);
+      this._linesOff(cr.hBuf,h.s,h.n,MVP,[.88,.93,1.0],a);
+    });
+
+    // tendrils
+    cr.tm.forEach((ten,i)=>{
+      const a=.11+.07*Math.sin(t*.72+i*.6);
+      this._linesOff(cr.tBuf,ten.s,ten.n,MVP,[.72,.88,1.0],a);
+    });
+  }
+
+  // ── low-level draw ──────────────────────────────────────────────────────────
+  _lines(buf,n,MVP,rgb,a){
+    const gl=this.gl,p=this._lp;
+    gl.useProgram(p);
+    gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+    const loc=gl.getAttribLocation(p,'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+    gl.uniformMatrix4fv(gl.getUniformLocation(p,'uMVP'),false,MVP);
+    gl.uniform4f(gl.getUniformLocation(p,'uColor'),...rgb,a);
+    gl.uniform1f(gl.getUniformLocation(p,'uCamZ'),this.camZ);
+    gl.drawArrays(gl.LINE_STRIP,0,n);
+  }
+
+  _linesOff(buf,start,n,MVP,rgb,a){
+    const gl=this.gl,p=this._lp;
+    gl.useProgram(p);
+    gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+    const loc=gl.getAttribLocation(p,'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,start*12);
+    gl.uniformMatrix4fv(gl.getUniformLocation(p,'uMVP'),false,MVP);
+    gl.uniform4f(gl.getUniformLocation(p,'uColor'),...rgb,a);
+    gl.uniform1f(gl.getUniformLocation(p,'uCamZ'),this.camZ);
+    gl.drawArrays(gl.LINE_STRIP,0,n);
+  }
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+(async()=>{
+  const canvas=document.getElementById('c');
+  let R;
+  try{ R=await new Renderer(canvas).init(); }
+  catch(e){ console.error(e); document.querySelector('#loading p').textContent='webgl2 unavailable'; return; }
+  window.renderer=R;
+  setTimeout(()=>document.getElementById('loading').classList.add('done'),700);
+  let last=performance.now();
+  const loop=now=>{ R.frame(Math.min((now-last)*.001,.05)); last=now; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
 })();
 
-// ── SCROLL REVEALS ────────────────────────────────────────────────────────────
-const io = new IntersectionObserver(entries=>{
-  entries.forEach(e=>{ if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);} });
-},{threshold:.1});
-document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+<script>
+// ui.js — navigation, sections, cursor
 
-// ── ACTIVE NAV ────────────────────────────────────────────────────────────────
-const navAs = document.querySelectorAll('.nav-links a');
-new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      navAs.forEach(a=>a.classList.remove('active'));
-      const a=document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
-      if(a) a.classList.add('active');
-    }
+// ─── Cursor ─────────────────────────────────────────────────────────────────
+(function() {
+  const cur   = document.getElementById('cur');
+  const trail = document.getElementById('cur-trail');
+  let mx=0, my=0, tx=0, ty=0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cur.style.left = mx + 'px';
+    cur.style.top  = my + 'px';
   });
-},{threshold:.4}).observe;
-document.querySelectorAll('section[id]').forEach(s=>{
-  new IntersectionObserver(entries=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){
-        navAs.forEach(a=>a.classList.remove('active'));
-        const a=document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
-        if(a) a.classList.add('active');
-      }
-    });
-  },{threshold:.4}).observe(s);
+
+  (function lerp() {
+    tx += (mx - tx) * 0.10;
+    ty += (my - ty) * 0.10;
+    trail.style.left = tx + 'px';
+    trail.style.top  = ty + 'px';
+    requestAnimationFrame(lerp);
+  })();
+
+  document.querySelectorAll('a,button,.node,.s,.pc').forEach(el => {
+    el.addEventListener('mouseenter', () => cur.classList.add('big'));
+    el.addEventListener('mouseleave', () => cur.classList.remove('big'));
+  });
+})();
+
+// ─── Section content ─────────────────────────────────────────────────────────
+const PANELS = {
+  about: {
+    color: 'red',
+    label: '01',
+    title: 'about',
+    html: `
+      <p class="body">
+        final-year computer science student at <strong>habib university, karachi</strong>,
+        specialising in computer vision, machine learning, and explainable ai. work centres
+        on building deep learning systems that are not only performant but interpretable —
+        models worth trusting.
+      </p>
+      <p class="body">
+        three years as a <strong>teaching assistant</strong> across nine courses, two-time
+        top performing student employee. researcher across sentiment analysis, music
+        recommendation, and plant disease detection. currently targeting graduate programs
+        in computer graphics and scientific visualisation — uoft dgp, ubc imager,
+        eth zurich, epfl.
+      </p>
+      <p class="body">
+        outside research: podcast host at <strong>habib university runway radio</strong>,
+        design lead at the arts &amp; cultural club, featured digital artist in the arzu anthology.
+        dark fantasy and gothic aesthetics inform all creative work.
+      </p>
+      <div class="stats">
+        <div class="stat"><b>3.95</b><small>gpa / 4.0</small></div>
+        <div class="stat"><b>9×</b><small>ta roles</small></div>
+        <div class="stat"><b>97%</b><small>peak f1</small></div>
+        <div class="stat"><b>6×</b><small>dean's list</small></div>
+      </div>`
+  },
+
+  exp: {
+    color: 'blue',
+    label: '02',
+    title: 'experience',
+    html: `
+      <div class="tline">
+        <div class="ti">
+          <div class="ti-date">2025 — present</div>
+          <div class="ti-role">mcp server developer (intern)</div>
+          <div class="ti-org">ejento ai / data science dojo</div>
+          <ul><li>building mcp server integrations, agent templates, and qa pipelines.</li></ul>
+        </div>
+        <div class="ti">
+          <div class="ti-date">aug 2023 — present</div>
+          <div class="ti-role">teaching assistant</div>
+          <div class="ti-org">habib university</div>
+          <ul>
+            <li>supported ~30 students per course across 9 courses through recitations and lab guidance.</li>
+            <li>received top performing student employee award twice.</li>
+          </ul>
+        </div>
+        <div class="ti">
+          <div class="ti-date">may 2025 — aug 2025</div>
+          <div class="ti-role">undergraduate researcher — music recommendation</div>
+          <div class="ti-org">habib university</div>
+          <ul>
+            <li>fine-tuned google t5 to map natural language prompts to audio features.</li>
+            <li>achieved ensemble accuracy of 80% across audio feature dimensions.</li>
+          </ul>
+        </div>
+        <div class="ti">
+          <div class="ti-date">may 2024 — aug 2024</div>
+          <div class="ti-role">undergraduate researcher — sentiment analysis</div>
+          <div class="ti-org">habib university</div>
+          <ul>
+            <li>built pipelines to collect, transcribe, and classify news video on price inflation sentiment.</li>
+            <li>fine-tuned mdeberta and xlm-roberta; f1 of 81%.</li>
+          </ul>
+        </div>
+      </div>`
+  },
+
+  projects: {
+    color: 'green',
+    label: '03',
+    title: 'projects',
+    html: `
+      <div class="pgrid">
+        <div class="pc">
+          <div class="pc-tag">computer vision · xai</div><div class="pc-score">f1 97%</div>
+          <div class="pc-title">explainable multi-crop disease detection</div>
+          <p class="pc-desc">extended mobilevit for multi-crop plant disease classification. eigen-cam and feature ablation validate attention on necrotic lesion regions. cvpr v4a workshop submission.</p>
+          <div class="pc-tech"><span class="pt">vision transformers</span><span class="pt">eigen-cam</span><span class="pt">pytorch</span></div>
+        </div>
+        <div class="pc">
+          <div class="pc-tag">webgl 2.0 · graphics</div><div class="pc-score">cs 440</div>
+          <div class="pc-title">procedural planet renderer</div>
+          <p class="pc-desc">webgl 2.0 renderer with simplex-noise terrain, blinn-phong shading, pcf shadow mapping, bloom post-processing, and procedural forest placement.</p>
+          <div class="pc-tech"><span class="pt">webgl 2.0</span><span class="pt">glsl</span><span class="pt">shadow maps</span><span class="pt">bloom</span></div>
+        </div>
+        <div class="pc">
+          <div class="pc-tag">3d vision · robotics</div><div class="pc-score">1 hz mapping</div>
+          <div class="pc-title">3d robot perception for cave environments</div>
+          <p class="pc-desc">procedural lava tube generation. real-time elevation mapping for point clouds and posture adaptation for a quadruped in low-clearance traversal.</p>
+          <div class="pc-tech"><span class="pt">ros2</span><span class="pt">gazebo</span><span class="pt">blender</span><span class="pt">zed2</span></div>
+        </div>
+        <div class="pc">
+          <div class="pc-tag">cnns · signal processing</div><div class="pc-score">f1 &gt;95%</div>
+          <div class="pc-title">bearing fault classification</div>
+          <p class="pc-desc">trained cnns to classify bearing fault patterns across time and frequency representations under severe noise conditions.</p>
+          <div class="pc-tech"><span class="pt">cnns</span><span class="pt">tensorflow</span><span class="pt">signal processing</span></div>
+        </div>
+        <div class="pc">
+          <div class="pc-tag">segmentation · zero-shot</div><div class="pc-score">iou 75%</div>
+          <div class="pc-title">crack segmentation via multichannel fusion</div>
+          <p class="pc-desc">zero-shot pipeline fusing intensity, saliency, and hessian feature maps. no gpu training required.</p>
+          <div class="pc-tech"><span class="pt">opencv</span><span class="pt">hessian</span><span class="pt">zero-shot</span></div>
+        </div>
+        <div class="pc">
+          <div class="pc-tag">llms · automation</div><div class="pc-score">1.25 hr/100 saved</div>
+          <div class="pc-title">llama 3 email outreach pipeline</div>
+          <p class="pc-desc">end-to-end pipeline for generating and dispatching personalised outreach emails for ngo campaigns using llama 3.</p>
+          <div class="pc-tech"><span class="pt">llama 3</span><span class="pt">node.js</span><span class="pt">express</span></div>
+        </div>
+      </div>`
+  },
+
+  skills: {
+    color: 'purple',
+    label: '04',
+    title: 'skills',
+    html: `
+      <div class="sgrid">
+        <div class="sg">
+          <div class="sg-t">graphics &amp; gpu</div>
+          <div class="si">
+            <span class="s">webgl 2.0</span><span class="s">webgpu</span><span class="s">glsl</span>
+            <span class="s">wgsl</span><span class="s">opengl</span><span class="s">cuda</span>
+            <span class="s">opencl</span><span class="s">vulkan</span><span class="s">metal</span>
+            <span class="s">directx</span><span class="s">blender</span>
+          </div>
+        </div>
+        <div class="sg">
+          <div class="sg-t">systems &amp; compute</div>
+          <div class="si">
+            <span class="s">c++</span><span class="s">c</span>
+            <span class="s">parallel computing</span><span class="s">multithreading</span>
+            <span class="s">numerical methods</span><span class="s">computational geometry</span>
+            <span class="s">physics simulation</span><span class="s">linux</span>
+          </div>
+        </div>
+        <div class="sg">
+          <div class="sg-t">machine learning</div>
+          <div class="si">
+            <span class="s">pytorch</span><span class="s">tensorflow</span><span class="s">keras</span>
+            <span class="s">hugging face</span><span class="s">scikit-learn</span>
+            <span class="s">pandas</span><span class="s">numpy</span>
+          </div>
+        </div>
+        <div class="sg">
+          <div class="sg-t">vision &amp; robotics</div>
+          <div class="si">
+            <span class="s">opencv</span><span class="s">ros2</span><span class="s">gazebo</span>
+            <span class="s">zed2</span><span class="s">point clouds</span><span class="s">elevation mapping</span>
+          </div>
+        </div>
+        <div class="sg">
+          <div class="sg-t">languages</div>
+          <div class="si">
+            <span class="s">python</span><span class="s">c++</span><span class="s">javascript</span>
+            <span class="s">matlab</span><span class="s">node.js</span><span class="s">vue.js</span>
+            <span class="s">mysql</span><span class="s">latex</span>
+          </div>
+        </div>
+        <div class="sg">
+          <div class="sg-t">tools</div>
+          <div class="si">
+            <span class="s">git</span><span class="s">docker</span><span class="s">jira</span>
+            <span class="s">photoshop</span><span class="s">illustrator</span>
+          </div>
+        </div>
+      </div>`
+  },
+
+  contact: {
+    color: 'white',
+    label: '05',
+    title: 'contact',
+    html: `
+      <p class="body" style="max-width:500px">
+        open to research collaborations, graduate program discussions, and compelling
+        problems in computer vision and machine learning. based in karachi —
+        available globally.
+      </p>
+      <div class="clinks">
+        <a href="mailto:zuhair.abbas2503@gmail.com" class="cl2">
+          <div><div class="clink-label cl2-l">email</div><div class="cl2-v">zuhair.abbas2503@gmail.com</div></div>
+          <span class="clink-arr cl2-a">→</span>
+        </a>
+        <a href="https://github.com/zuhairs-account" target="_blank" class="cl2">
+          <div><div class="clink-label cl2-l">github</div><div class="cl2-v">github.com/zuhairs-account</div></div>
+          <span class="clink-arr cl2-a">→</span>
+        </a>
+        <a href="https://linkedin.com/in/zuhairabbas" target="_blank" class="cl2">
+          <div><div class="clink-label cl2-l">linkedin</div><div class="cl2-v">linkedin.com/in/zuhairabbas</div></div>
+          <span class="clink-arr cl2-a">→</span>
+        </a>
+      </div>
+      <div class="motto">
+        perception without interpretation is noise.<br>
+        intelligence is the act of making meaning.
+      </div>`
+  }
+};
+
+// ─── Build panels ─────────────────────────────────────────────────────────────
+const overlay = document.getElementById('overlay');
+
+for (const [key, data] of Object.entries(PANELS)) {
+  const div = document.createElement('div');
+  div.className = 'sec-panel';
+  div.dataset.color = data.color;
+  div.dataset.section = key;
+  div.style.display = 'none';
+  div.innerHTML = `
+    <div class="sec-label">${data.label}</div>
+    <h2 class="sec-title">${data.title}</h2>
+    ${data.html}
+  `;
+  overlay.appendChild(div);
+}
+
+// ─── Navigation state ─────────────────────────────────────────────────────────
+const hub      = document.getElementById('hub');
+const heroEl   = document.getElementById('hero');
+const backBtn  = document.getElementById('back');
+
+let state = 'hub';
+let currentPanel = null;
+
+const nodeToSection = {
+  'n-about':    'about',
+  'n-exp':      'exp',
+  'n-projects': 'projects',
+  'n-skills':   'skills',
+  'n-contact':  'contact',
+};
+
+const sectionToZ = {
+  'about':    { z: 40,  tilt: 0.04 },
+  'exp':      { z: 90,  tilt: 0.06 },
+  'projects': { z: 140, tilt: -0.04 },
+  'skills':   { z: 190, tilt: 0.05 },
+  'contact':  { z: 240, tilt: 0.0 },
+};
+
+const sectionToAccent = {
+  'about':    [1.0, 0.25, 0.25],
+  'exp':      [0.25, 0.55, 1.0],
+  'projects': [0.25, 0.85, 0.50],
+  'skills':   [0.65, 0.32, 1.0],
+  'contact':  [1.0,  1.0,  1.0],
+};
+
+function diveInto(sectionKey) {
+  if (state === 'section') return;
+  state = 'section';
+
+  // Camera dive
+  const { z, tilt } = sectionToZ[sectionKey];
+  const accent = sectionToAccent[sectionKey];
+  if (window.renderer) {
+    window.renderer.setCamZ(z, tilt);
+    window.renderer.setAccent(accent);
+  }
+
+  // Hide hub
+  hub.style.opacity = '0';
+  hub.style.pointerEvents = 'none';
+  heroEl.style.opacity = '0';
+
+  // Show panel after camera starts moving
+  setTimeout(() => {
+    document.querySelectorAll('.sec-panel').forEach(p => p.style.display = 'none');
+    const panel = overlay.querySelector(`[data-section="${sectionKey}"]`);
+    if (panel) { panel.style.display = 'block'; currentPanel = panel; }
+    overlay.classList.add('vis');
+  }, 400);
+
+  backBtn.classList.add('vis');
+}
+
+function returnToHub() {
+  if (state === 'hub') return;
+  state = 'hub';
+
+  overlay.classList.remove('vis');
+  setTimeout(() => {
+    if (currentPanel) currentPanel.style.display = 'none';
+  }, 600);
+
+  hub.style.opacity = '1';
+  hub.style.pointerEvents = 'auto';
+  heroEl.style.opacity = '1';
+  backBtn.classList.remove('vis');
+
+  if (window.renderer) {
+    window.renderer.setCamZ(6, 0);
+    window.renderer.setAccent([0.8, 0.88, 1.0]);
+  }
+}
+
+// ─── Bind nodes ───────────────────────────────────────────────────────────────
+document.querySelectorAll('.node').forEach(node => {
+  const key = nodeToSection[node.id];
+  if (!key) return;
+  node.addEventListener('click', () => diveInto(key));
 });
+
+backBtn.addEventListener('click', returnToHub);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') returnToHub();
+});
+
+// ─── Node parallax in hub ────────────────────────────────────────────────────
+document.addEventListener('mousemove', e => {
+  if (state !== 'hub') return;
+  const nx = (e.clientX / window.innerWidth  - 0.5) * 2;
+  const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+  document.querySelectorAll('.node').forEach((n, i) => {
+    const d = 0.4 + i * 0.13;
+    n.style.transform = `translate(calc(-50% + ${nx*22*d}px), calc(-50% + ${ny*14*d}px))`;
+  });
+});
+
+// ─── Hover transitions ────────────────────────────────────────────────────────
+hub.style.transition      = 'opacity .7s';
+heroEl.style.transition   = 'opacity .7s';
+
 </script>
 </body>
 </html>
