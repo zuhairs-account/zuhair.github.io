@@ -345,7 +345,7 @@ void main(){
   vec4 world=uModel*vec4(aPos,1.0);
   vec4 clip=uVP*world;
   gl_Position=clip;
-  float ndcFog=1.0-smoothstep(0.15,0.97,clip.z/clip.w);
+  float ndcFog=1.0-smoothstep(0.85,0.99,clip.z/clip.w);
   float dist=abs(world.z+uCamZ);
   float df=1.0-smoothstep(8.0,210.0,dist);
   vFog=ndcFog*df;
