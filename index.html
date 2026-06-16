@@ -1,975 +1,912 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>zuhair abbas</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@100;300;400&display=swap" rel="stylesheet"/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --white:rgba(255,255,255,0.90);
-  --dim:rgba(255,255,255,0.45);
-  --faint:rgba(255,255,255,0.18);
-  --glow:0 0 12px rgba(255,255,255,0.35),0 0 30px rgba(255,255,255,0.12);
-  --font:-apple-system,'Helvetica Neue',Helvetica,Arial,sans-serif;
-}
-html,body{width:100%;height:100%;overflow:hidden;background:#020510}
-body{cursor:none;font-family:var(--font);font-weight:300;color:var(--white)}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>zuhair abbas</title>
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           CSS CUSTOM PROPERTIES & RESET
+           ═══════════════════════════════════════════════════════════ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --fg: #111;
+            --dim: #333;
+            --faint: #666;
+            --accent: #e62030;
+            --red-glow: 0 0 10px rgba(230, 32, 48, 1.0);
+            --font: -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --text-min: 0.75rem;
+        }
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            cursor: default;               /* restore default cursor */
+        }
+        body {
+            font-family: var(--font);
+            font-weight: 300;
+            color: var(--fg);
+            -webkit-font-smoothing: antialiased;
+            font-size: 1.2rem;
+        }
 
-/* canvas fills screen */
-#c{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+        #bg-base {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: linear-gradient(to top, #000 0%, #1a1a1a 30%, #4a4a4a 60%, #a0a0a0 100%);
+        }
+        #godray {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.25) 0%, transparent 65%);
+            animation: godrayPulse 9s ease-in-out infinite;
+        }
+        @keyframes godrayPulse {
+            0%, 100% { opacity: 0.65; }
+            50% { opacity: 1; }
+        }
 
-/* cursor */
-#cur{position:fixed;width:6px;height:6px;border-radius:50%;background:#fff;
-  pointer-events:none;z-index:9999;transform:translate(-50%,-50%);
-  box-shadow:0 0 8px rgba(255,255,255,0.8),0 0 20px rgba(255,255,255,0.3);
-  transition:width .15s,height .15s,opacity .15s}
-#cur.big{width:14px;height:14px;opacity:.6}
-#cur-trail{position:fixed;width:28px;height:28px;border-radius:50%;
-  border:1px solid rgba(255,255,255,0.2);pointer-events:none;z-index:9998;
-  transform:translate(-50%,-50%);transition:none}
+        #c-wave {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.82;
+        }
+        #c-shapes {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+        #vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.03) 100%);
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 4;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.01) 2px, rgba(0, 0, 0, 0.01) 3px);
+        }
 
-/* scanlines */
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:5;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 4px)}
+        /* ── loading ── */
+        #loading {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s;
+        }
+        #loading.done { opacity: 0; pointer-events: none; }
+        #loading p {
+            font-size: 0.8rem;
+            letter-spacing: 0.36em;
+            color: #999;
+        }
 
-/* HUB UI */
-#hub{position:fixed;inset:0;z-index:10;pointer-events:none;transition:opacity .8s}
-#hub.hidden{opacity:0;pointer-events:none}
+        /* UI wrapper */
+        #ui {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            transform-origin: 50% 50%;
+        }
+        #ui.anim {
+            transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1), filter 0.45s ease;
+        }
 
-.node{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;cursor:none}
-.node-box{
-  padding:.7rem 1.4rem;
-  border:1px solid rgba(255,255,255,0.12);
-  background:rgba(2,5,16,0.4);
-  backdrop-filter:blur(6px);
-  text-align:center;
-  transition:border-color .3s,background .3s,transform .2s;
-}
-.node:hover .node-box{
-  border-color:rgba(255,255,255,0.35);
-  background:rgba(2,5,16,0.7);
-  transform:scale(1.06)
-}
-.node-n{font-size:.5rem;letter-spacing:.3em;color:var(--faint);margin-bottom:.3rem}
-.node-l{font-size:.78rem;letter-spacing:.18em;text-transform:lowercase;
-  color:var(--white);text-shadow:var(--glow)}
-.node-sub{font-size:.45rem;letter-spacing:.14em;color:var(--faint);margin-top:.25rem;
-  opacity:0;transition:opacity .25s}
-.node:hover .node-sub{opacity:1}
+        #hub {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.55s;
+        }
+        #hub.hidden { opacity: 0; pointer-events: none !important; }
+        #hub.hidden * { pointer-events: none !important; }
 
-/* hero text */
-#hero{position:fixed;bottom:3rem;left:50%;transform:translateX(-50%);
-  z-index:10;text-align:center;pointer-events:none;transition:opacity .7s;white-space:nowrap}
-#hero h1{font-size:clamp(2rem,5vw,4.5rem);font-weight:100;letter-spacing:.08em;
-  color:var(--white);text-shadow:var(--glow)}
-#hero h1 span{font-weight:300}
-#hero p{font-size:.55rem;letter-spacing:.32em;color:var(--dim);margin-top:.6rem}
-#hero small{font-size:.5rem;letter-spacing:.2em;color:var(--faint);
-  display:block;margin-top:.4rem;font-style:italic;
-  animation:pulse 3s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:.3}50%{opacity:.8}}
+        .node {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
+            will-change: transform;
+        }
 
-/* BACK */
-#back{position:fixed;top:1.5rem;left:1.8rem;z-index:200;
-  font-size:.52rem;letter-spacing:.25em;text-transform:lowercase;
-  color:var(--dim);border:1px solid rgba(255,255,255,.1);
-  padding:.45rem .9rem;background:rgba(2,5,16,0.6);
-  cursor:none;transition:color .2s,border-color .2s,opacity .3s,box-shadow .2s;
-  opacity:0;pointer-events:none}
-#back.vis{opacity:1;pointer-events:auto}
-#back:hover{color:var(--white);border-color:rgba(255,255,255,.3);box-shadow:var(--glow)}
+        /* Node boxes – removed backdrop-filter for performance */
+        .node-box {
+            padding: 1.3rem 2.4rem;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            border-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 0%, rgba(0, 0, 0, 0.25) 100%) 1;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.25) 100%);
+            text-align: center;
+            transition: border-color 0.35s, background 0.35s, box-shadow 0.35s, transform 0.25s;
+            position: relative;
+            color: var(--fg);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+        .node-box {
+            padding: 1.3rem 2.4rem;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            border-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 0%, rgba(0, 0, 0, 0.25) 100%) 1;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.25) 100%);
+            backdrop-filter: blur(2px);              /* ← restored */
+            -webkit-backdrop-filter: blur(2px);      /* ← restored */
+            text-align: center;
+            transition: border-color 0.35s, background 0.35s, box-shadow 0.35s, transform 0.25s;
+            position: relative;
+            color: var(--fg);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+        .node:hover .node-box {
+            border-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.9) 0%, rgba(0, 0, 0, 0.35) 100%) 1;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.65) 100%);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45), 0 0 28px rgba(230, 57, 70, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+            transform: scale(1.06);
+        }
+        .node:hover .node-box::after { opacity: 1; }
+        .node-n {
+            font-size: 0.9rem;
+            letter-spacing: 0.28em;
+            color: var(--faint);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+        }
+        .node-l {
+            font-size: 1.8rem;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+            text-shadow: 0 0 8px rgba(230, 57, 70, 0.3);
+            font-weight: 500;
+            transition: text-shadow 0.3s;
+        }
 
-/* SECTION OVERLAY */
-#overlay{position:fixed;inset:0;z-index:50;
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;pointer-events:none;transition:opacity .9s}
-#overlay.vis{opacity:1;pointer-events:auto}
+        @keyframes glowPulse {
+            0% {
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset, 0 0 5px rgba(230, 57, 70, 0);
+            }
+            4% {
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset, 0 0 25px rgba(230, 57, 70, 0.65);
+            }
+            16% {
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset, 0 0 25px rgba(230, 57, 70, 0.65);
+            }
+            20% {
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset, 0 0 5px rgba(230, 57, 70, 0);
+            }
+            100% {
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset, 0 0 5px rgba(230, 57, 70, 0);
+            }
+        }
+        @keyframes textGlowPulse {
+            0% { text-shadow: 0 0 8px rgba(230, 57, 70, 0.3); }
+            4% { text-shadow: 0 0 22px rgba(230, 57, 70, 0.9), 0 0 36px rgba(230, 57, 70, 0.6); }
+            16% { text-shadow: 0 0 22px rgba(230, 57, 70, 0.9), 0 0 36px rgba(230, 57, 70, 0.6); }
+            20% { text-shadow: 0 0 8px rgba(230, 57, 70, 0.3); }
+            100% { text-shadow: 0 0 8px rgba(230, 57, 70, 0.3); }
+        }
+        .node-box.sequential-pulse { animation: none !important; }
+        .node-l.sequential-glow { animation: none !important; }
 
-.sec-panel{
-  max-width:820px;width:90%;max-height:80vh;overflow-y:auto;
-  padding:3rem;
-  border:1px solid;
-  background:rgba(2,5,16,0.75);
-  backdrop-filter:blur(16px);
-  scrollbar-width:thin;
-}
-.sec-panel::-webkit-scrollbar{width:2px}
-.sec-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15)}
+        #hero {
+            position: fixed;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            text-align: center;
+            pointer-events: none;
+            transition: opacity 0.55s;
+            white-space: nowrap;
+            color: #fff;
+        }
+        #hero h1 {
+            font-size: clamp(3.4rem, 7vw, 5.5rem);
+            font-weight: 100;
+            letter-spacing: 0.1em;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(230, 57, 70, 0.4);
+        }
+        #hero h1 em {
+            font-style: normal;
+            font-weight: 300;
+            color: var(--accent);
+        }
+        #hero p {
+            font-size: 0.85rem;
+            letter-spacing: 0.28em;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 0.6rem;
+        }
+        #hero small {
+            font-size: var(--text-min);
+            letter-spacing: 0.22em;
+            color: rgba(255, 255, 255, 0.4);
+            display: block;
+            margin-top: 0.35rem;
+            animation: breathe 4s ease-in-out infinite;
+        }
+        @keyframes breathe {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.75; }
+        }
 
-.sec-panel[data-color="red"]{border-color:rgba(220,60,60,0.3);box-shadow:0 0 60px rgba(220,60,60,0.08),inset 0 0 40px rgba(220,60,60,0.03)}
-.sec-panel[data-color="blue"]{border-color:rgba(60,130,220,0.3);box-shadow:0 0 60px rgba(60,130,220,0.08),inset 0 0 40px rgba(60,130,220,0.03)}
-.sec-panel[data-color="green"]{border-color:rgba(60,200,120,0.3);box-shadow:0 0 60px rgba(60,200,120,0.08),inset 0 0 40px rgba(60,200,120,0.03)}
-.sec-panel[data-color="purple"]{border-color:rgba(160,80,220,0.3);box-shadow:0 0 60px rgba(160,80,220,0.08),inset 0 0 40px rgba(160,80,220,0.03)}
-.sec-panel[data-color="white"]{border-color:rgba(255,255,255,0.18);box-shadow:0 0 60px rgba(255,255,255,0.05)}
+        #back {
+            position: fixed;
+            top: 1.4rem;
+            left: 1.6rem;
+            z-index: 200;
+            font-size: var(--text-min);
+            letter-spacing: 0.26em;
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.55rem 1.1rem;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);              /* ← restored */
+            -webkit-backdrop-filter: blur(8px);      /* ← restored */
+            font-family: var(--font);
+            transition: color 0.2s, border-color 0.2s, opacity 0.3s;
+            opacity: 0;
+            pointer-events: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #back.vis { opacity: 1; pointer-events: auto; }
+        #back:hover {
+            color: var(--accent);
+            border-color: rgba(230, 57, 70, 0.8);
+            background: rgba(255, 255, 255, 0.25);
+        }
 
-/* accent line per color */
-.sec-panel[data-color="red"] .accent{color:rgba(255,100,100,0.9);text-shadow:0 0 12px rgba(255,80,80,0.5)}
-.sec-panel[data-color="blue"] .accent{color:rgba(100,170,255,0.9);text-shadow:0 0 12px rgba(80,150,255,0.5)}
-.sec-panel[data-color="green"] .accent{color:rgba(80,220,140,0.9);text-shadow:0 0 12px rgba(60,200,120,0.5)}
-.sec-panel[data-color="purple"] .accent{color:rgba(200,120,255,0.9);text-shadow:0 0 12px rgba(180,100,255,0.5)}
-.sec-panel[data-color="white"] .accent{color:rgba(255,255,255,0.95);text-shadow:var(--glow)}
+        #overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        #overlay.vis { opacity: 1; pointer-events: auto; }
 
-/* section typography */
-.sec-label{font-size:.48rem;letter-spacing:.3em;color:var(--faint);margin-bottom:.5rem}
-.sec-title{font-size:clamp(1.2rem,3vw,2rem);font-weight:100;letter-spacing:.12em;
-  color:var(--white);text-shadow:var(--glow);margin-bottom:2.5rem;padding-bottom:1rem;
-  border-bottom:1px solid rgba(255,255,255,.07)}
-.sec-rule{height:1px;background:rgba(255,255,255,.06);margin:1.5rem 0}
+        .sec-panel {
+            max-width: 820px;
+            width: 88vw;
+            max-height: 78vh;
+            overflow-y: auto;
+            padding: 2.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);              /* ← restored */
+            -webkit-backdrop-filter: blur(4px);      /* ← restored */
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.5), 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+            display: none;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) transparent;
+            color: #ddd;
+            border-radius: 6px;
+        }
+        .sec-panel::-webkit-scrollbar { width: 3px; }
+        .sec-panel::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
 
-p.body{font-size:.82rem;line-height:1.95;color:var(--dim);margin-bottom:.9rem}
-p.body strong{color:var(--white);font-weight:400}
+        .sec-label {
+            font-size: var(--text-min);
+            letter-spacing: 0.32em;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 0.6rem;
+        }
+        .sec-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 100;
+            letter-spacing: 0.14em;
+            color: #fff;
+            margin-bottom: 2.4rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        p.body {
+            font-size: 1.2rem;
+            line-height: 1.9;
+            color: rgba(255, 255, 255, 0.75);
+            margin-bottom: 1rem;
+        }
+        p.body strong { color: #fff; font-weight: 500; }
+        p.body a { color: var(--accent); text-decoration: none; }
+        p.body a:hover { text-decoration: underline; }
 
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
-  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);margin-top:1.8rem}
-.stat{padding:1rem;text-align:center;background:rgba(2,5,16,0.5)}
-.stat b{display:block;font-size:1.8rem;font-weight:100;color:var(--white);
-  text-shadow:var(--glow);margin-bottom:.2rem}
-.stat small{font-size:.45rem;letter-spacing:.18em;color:var(--faint)}
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 1.8rem;
+        }
+        .stat {
+            padding: 1.1rem;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .stat b {
+            display: block;
+            font-size: 2.4rem;           /* increased stats number size */
+            font-weight: 100;
+            color: #fff;
+            text-shadow: var(--red-glow);
+            margin-bottom: 0.15rem;
+        }
+        .stat small { font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); }
 
-.tline{border-left:1px solid rgba(255,255,255,.08);padding-left:1.8rem;margin-top:0}
-.ti{position:relative;padding-bottom:2rem}
-.ti:last-child{padding-bottom:0}
-.ti::before{content:'';position:absolute;left:-1.9rem;top:.3rem;
-  width:7px;height:7px;border:1px solid rgba(255,255,255,.3);border-radius:50%;background:rgba(2,5,16,1)}
-.ti-date{font-size:.48rem;letter-spacing:.2em;color:var(--faint);margin-bottom:.35rem}
-.ti-role{font-size:.88rem;font-weight:400;color:var(--white);margin-bottom:.08rem}
-.ti-org{font-size:.72rem;font-style:italic;color:var(--dim);margin-bottom:.6rem}
-.ti ul{list-style:none;padding:0}
-.ti li{font-size:.76rem;line-height:1.8;color:var(--dim);padding-left:.8rem;
-  position:relative;margin-bottom:.2rem}
-.ti li::before{content:'–';position:absolute;left:0;color:rgba(255,255,255,.2)}
+        .tline {
+            border-left: 1px solid rgba(255, 255, 255, 0.15);
+            padding-left: 1.6rem;
+            margin-top: 0;
+        }
+        .ti { position: relative; padding-bottom: 2rem; }
+        .ti:last-child { padding-bottom: 0; }
+        .ti::before {
+            content: '';
+            position: absolute;
+            left: -1.8rem;
+            top: 0.3rem;
+            width: 6px;
+            height: 6px;
+            border: 1px solid var(--accent);
+            border-radius: 50%;
+            background: #000;
+        }
+        .ti-date {
+            font-size: var(--text-min);
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.18em;
+        }
+        .ti-role {
+            font-size: 1.15rem;
+            font-weight: 500;
+            color: #fff;
+            margin-bottom: 0.1rem;
+        }
+        .ti-org {
+            font-size: 0.9rem;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.55);
+            margin-bottom: 0.55rem;
+        }
+        .ti ul { list-style: none; padding: 0; }
+        .ti li {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.7);
+            padding-left: 0.7rem;
+            position: relative;
+            margin-bottom: 0.12rem;
+        }
+        .ti li::before { content: '–'; position: absolute; left: 0; color: var(--accent); }
 
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1px;
-  background:rgba(255,255,255,.06)}
-.pc{background:rgba(2,5,16,.6);padding:1.3rem;transition:background .2s;position:relative}
-.pc:hover{background:rgba(8,15,40,.8)}
-.pc-tag{font-size:.44rem;letter-spacing:.18em;color:var(--faint);margin-bottom:.4rem}
-.pc-score{position:absolute;top:1.1rem;right:1.1rem;font-size:.46rem;
-  letter-spacing:.1em;color:var(--dim)}
-.pc-title{font-size:.82rem;font-weight:400;color:var(--white);margin-bottom:.5rem;
-  line-height:1.3;padding-right:3.5rem}
-.pc:hover .pc-title{text-shadow:var(--glow)}
-.pc-desc{font-size:.72rem;line-height:1.75;color:var(--dim);margin-bottom:.8rem}
-.pc-tech{display:flex;flex-wrap:wrap;gap:.25rem}
-.pt{font-size:.42rem;letter-spacing:.1em;color:var(--faint);
-  border:1px solid rgba(255,255,255,.07);padding:.1rem .35rem}
+        .pgrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .pc {
+            background: rgba(0, 0, 0, 0.35);
+            padding: 1.2rem;
+            transition: background 0.2s;
+        }
+        .pc:hover { background: rgba(0, 0, 0, 0.55); }
+        .pc-tag {
+            font-size: var(--text-min);
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 0.4rem;
+            letter-spacing: 0.16em;
+        }
+        .pc-title {
+            font-size: 1.05rem;
+            font-weight: 400;
+            color: #fff;
+            margin-bottom: 0.4rem;
+        }
+        .pc-desc {
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.65);
+            margin-bottom: 0.7rem;
+        }
+        .pc-tech { display: flex; flex-wrap: wrap; gap: 0.18rem; }
+        .pt {
+            font-size: var(--text-min);
+            color: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 0.08rem 0.32rem;
+            letter-spacing: 0.08em;
+        }
 
-.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1px;
-  background:rgba(255,255,255,.06)}
-.sg{background:rgba(2,5,16,.6);padding:1.1rem}
-.sg-t{font-size:.46rem;letter-spacing:.22em;color:var(--faint);margin-bottom:.7rem}
-.si{display:flex;flex-wrap:wrap;gap:.25rem}
-.s{font-size:.52rem;color:var(--dim);padding:.15rem .4rem;
-  border:1px solid rgba(255,255,255,.07);letter-spacing:.04em;transition:color .15s,border-color .15s}
-.s:hover{color:var(--white);border-color:rgba(255,255,255,.2)}
+        .sgrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .sg { background: rgba(0, 0, 0, 0.35); padding: 1.1rem; }
+        .sg-t {
+            font-size: var(--text-min);
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 0.6rem;
+            letter-spacing: 0.2em;
+        }
+        .si { display: flex; flex-wrap: wrap; gap: 0.2rem; }
+        .s {
+            font-size: var(--text-min);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0.12rem 0.4rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            letter-spacing: 0.04em;
+            transition: color 0.15s, border-color 0.15s;
+            cursor: pointer;
+        }
+        .s:hover { color: var(--accent); border-color: var(--accent); }
 
-.clinks{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.06);margin-bottom:1.5rem}
-.cl2{display:flex;align-items:center;gap:1rem;text-decoration:none;
-  padding:.8rem 1rem;background:rgba(2,5,16,.6);transition:background .2s}
-.cl2:hover{background:rgba(8,15,40,.8)}
-.cl2-l{font-size:.44rem;letter-spacing:.2em;color:var(--faint);margin-bottom:.1rem;transition:color .2s}
-.cl2:hover .cl2-l{color:var(--white)}
-.cl2-v{font-size:.76rem;color:var(--dim)}
-.cl2-a{margin-left:auto;font-size:.7rem;color:rgba(255,255,255,.2);
-  opacity:0;transition:opacity .2s,transform .2s}
-.cl2:hover .cl2-a{opacity:1;transform:translateX(3px)}
-.motto{font-size:.8rem;line-height:1.85;color:var(--faint);font-style:italic;
-  border-left:1px solid rgba(255,255,255,.1);padding-left:1rem;margin-top:1.2rem}
+        .clinks {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 1.6rem;
+        }
+        .cl {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            text-decoration: none;
+            padding: 0.85rem 1.1rem;
+            background: rgba(0, 0, 0, 0.35);
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .cl:hover { background: rgba(0, 0, 0, 0.55); }
+        .cl-l {
+            font-size: var(--text-min);
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 0.08rem;
+            letter-spacing: 0.18em;
+        }
+        .cl-v { font-size: 0.95rem; color: rgba(255, 255, 255, 0.7); }
+        .cl-a {
+            margin-left: auto;
+            font-size: var(--text-min);
+            color: var(--accent);
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .cl:hover .cl-a { opacity: 1; transform: translateX(4px); }
 
-/* loading */
-#loading{position:fixed;inset:0;z-index:300;background:#020510;
-  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;
-  transition:opacity .8s}
-#loading.done{opacity:0;pointer-events:none}
-#loading p{font-size:.52rem;letter-spacing:.3em;color:var(--faint)}
-
-@media(max-width:600px){
-  .stats{grid-template-columns:1fr 1fr}
-  .sec-panel{padding:1.5rem}
-  #hero h1{font-size:2rem}
-}
-</style>
+        @media(max-width:700px) {
+            .node-box { padding: 1rem 1.8rem; }
+            .node-l { font-size: 1.4rem; }
+            .node-n { font-size: 0.75rem; }
+            .stats { grid-template-columns: 1fr 1fr; }
+            .sec-panel { padding: 2rem; }
+            #hero h1 { font-size: 2.6rem; }
+            #hero p { font-size: 0.7rem; }
+            p.body { font-size: 1.05rem; }
+        }
+        @media(max-width:500px) {
+            .node-box { padding: 0.7rem 1.2rem; }
+            .node-l { font-size: 1.1rem; }
+            .node-n { font-size: var(--text-min); }
+            #hero h1 { font-size: 2rem; }
+            #hero p { font-size: var(--text-min); }
+            .sec-panel { padding: 1.6rem; }
+        }
+    </style>
 </head>
 <body>
-<div id="loading"><p>initialising</p></div>
-<div id="cur"></div>
-<div id="cur-trail"></div>
-<canvas id="c"></canvas>
+    <div id="loading"><p>initialising</p></div>
+    <div id="bg-base"></div>
+    <div id="godray"></div>
+    <canvas id="c-wave"></canvas>
+    <canvas id="c-shapes"></canvas>
+    <div id="vignette"></div>
 
-<div id="hub">
-  <div class="node" id="n-about"    style="left:36%;top:34%"><div class="node-box"><div class="node-n">01</div><div class="node-l">about</div><div class="node-sub">dive in</div></div></div>
-  <div class="node" id="n-exp"      style="left:67%;top:28%"><div class="node-box"><div class="node-n">02</div><div class="node-l">experience</div><div class="node-sub">dive in</div></div></div>
-  <div class="node" id="n-projects" style="left:25%;top:57%"><div class="node-box"><div class="node-n">03</div><div class="node-l">projects</div><div class="node-sub">dive in</div></div></div>
-  <div class="node" id="n-skills"   style="left:65%;top:63%"><div class="node-box"><div class="node-n">04</div><div class="node-l">skills</div><div class="node-sub">dive in</div></div></div>
-  <div class="node" id="n-contact"  style="left:50%;top:75%"><div class="node-box"><div class="node-n">05</div><div class="node-l">contact</div><div class="node-sub">dive in</div></div></div>
-</div>
+    <!-- No custom cursor elements -->
 
-<div id="hero">
-  <h1>zuhair <span>abbas</span></h1>
-  <p>computer vision · machine learning · visual computing</p>
-  <small>navigate the space</small>
-</div>
-
-<button id="back">← return</button>
-
-<div id="overlay">
-  <!-- panels injected by JS -->
-</div>
-
-
-
-
-<script>
-// renderer.js  — WebGL2, true 3D, depth-of-field particles, angelic creature
-'use strict';
-
-// ─── Mat4 helpers ─────────────────────────────────────────────────────────────
-function m4()        { return new Float32Array(16); }
-function ident()     { const m=m4(); m[0]=m[5]=m[10]=m[15]=1; return m; }
-function mul(a,b) { const o=m4(); for(let c=0;c<4;c++) for(let r=0;r<4;r++) for(let k=0;k<4;k++) o[c*4+r]+=a[k*4+r]*b[c*4+k]; return o; }
-function persp(fov,asp,n,f){ const m=m4(),t=1/Math.tan(fov*.5),d=f-n; m[0]=t/asp;m[5]=t;m[10]=-(f+n)/d;m[11]=-1;m[14]=-2*f*n/d; return m; }
-function tr(x,y,z)   { const m=ident(); m[12]=x;m[13]=y;m[14]=z; return m; }
-function rx(a)       { const m=ident(),c=Math.cos(a),s=Math.sin(a); m[5]=c;m[6]=-s;m[9]=s;m[10]=c; return m; }
-function ry(a)       { const m=ident(),c=Math.cos(a),s=Math.sin(a); m[0]=c;m[2]=s;m[8]=-s;m[10]=c; return m; }
-function sc(x,y,z)   { const m=ident(); m[0]=x;m[5]=y;m[10]=z; return m; }
-
-// ─── Deterministic RNG ────────────────────────────────────────────────────────
-function rng(seed) { const s=Math.sin(seed*127.1+311.7)*43758.5453; return s-Math.floor(s); }
-
-// ─── Section definitions ──────────────────────────────────────────────────────
-window.SECTIONS=[
-  {id:'about',    camZ:40,  color:[1.00,0.24,0.24]},
-  {id:'exp',      camZ:90,  color:[0.24,0.55,1.00]},
-  {id:'projects', camZ:140, color:[0.24,0.85,0.50]},
-  {id:'skills',   camZ:190, color:[0.64,0.32,1.00]},
-  {id:'contact',  camZ:240, color:[1.00,1.00,1.00]},
-];
-
-// ─── Geometry ─────────────────────────────────────────────────────────────────
-function ringVerts(r,segs) {
-  const v=new Float32Array((segs+1)*3);
-  for(let i=0;i<=segs;i++){const a=(i/segs)*Math.PI*2;v[i*3]=Math.cos(a)*r;v[i*3+1]=Math.sin(a)*r;}
-  return v;
-}
-
-function buildCreature() {
-  // spine
-  const SPTS=36, sv=[];
-  for(let i=0;i<=SPTS;i++){
-    const t=i/SPTS, a=t*Math.PI*2.0, r=0.72*(1-t*.42);
-    sv.push(Math.cos(a)*r, t*3.2-1.6, Math.sin(a)*r*.22);
-  }
-  // halos — 5 tilted rings
-  const hv=[], hm=[];
-  const HR=[{cy:-1.2,r:.52,tx:.28},{cy:-.45,r:.82,tx:-.18},{cy:.2,r:1.0,tx:.38},{cy:.85,r:.65,tx:-.14},{cy:1.38,r:.38,tx:.22}];
-  const HSEGS=52;
-  for(const h of HR){
-    const s0=hv.length/3;
-    for(let i=0;i<=HSEGS;i++){
-      const a=(i/HSEGS)*Math.PI*2, cx=Math.cos(a)*h.r, cy2=Math.sin(a)*h.r;
-      hv.push(cx, h.cy+cy2*Math.sin(h.tx), cy2*Math.cos(h.tx)*.18);
-    }
-    hm.push({s:s0,n:HSEGS+1});
-  }
-  // tendrils
-  const tv=[], tm=[];
-  const NT=10, TP=20;
-  for(let ti=0;ti<NT;ti++){
-    const ba=(ti/NT)*Math.PI*2, by=(ti%5-2)*.55, s0=tv.length/3;
-    for(let i=0;i<=TP;i++){
-      const s=i/TP, curl=s*s*Math.PI*2.2, r2=(1-s)*(.75+rng(ti)*.55);
-      tv.push(Math.cos(ba+curl)*r2, by-s*1.7-s*s*.4, Math.sin(ba+curl)*r2*.16);
-    }
-    tm.push({s:s0,n:TP+1});
-  }
-  return {
-    spine:    new Float32Array(sv), sN: SPTS+1,
-    halos:    new Float32Array(hv), hm,
-    tendrils: new Float32Array(tv), tm,
-  };
-}
-
-function buildOrganisms() {
-  return Array.from({length:26},(_, i)=>({
-    x: (rng(i*7  )-.5)*95,
-    y: (rng(i*7+1)-.5)*48,
-    z: -(rng(i*7+2)*290+5),
-    color: (()=>{
-      for(const s of window.SECTIONS) if(-i*11.5>-(s.camZ+35)&&-i*11.5<-(s.camZ-35)) return s.color;
-      return [1,.22,.22];
-    })(),
-    rings: Array.from({length:2+Math.floor(rng(i)*3)},(_,r)=>(.28+r*.24+rng(i*13+r)*.28)),
-  }));
-}
-
-function buildParticles(n=750) {
-  const v=new Float32Array(n*3);
-  for(let i=0;i<n;i++){v[i*3]=(rng(i*3)-.5)*130;v[i*3+1]=(rng(i*3+1)-.5)*65;v[i*3+2]=-rng(i*3+2)*330;}
-  return v;
-}
-
-// ─── Shaders ─────────────────────────────────────────────────────────────────
-
-const LINE_VS=`#version 300 es
-precision highp float;
-in vec3 aPos;
-uniform mat4 uMVP;
-uniform float uCamZ;
-out float vFog;
-void main(){
-  vec4 clip=uMVP*vec4(aPos,1.0);
-  gl_Position=clip;
-  float ndcZ=clip.z/clip.w;
-  float distFog=1.0-smoothstep(0.15,0.97,ndcZ);
-  vFog=distFog;
-}`;
-
-const LINE_FS=`#version 300 es
-precision mediump float;
-in float vFog;
-uniform vec4 uColor;
-out vec4 fc;
-void main(){fc=vec4(uColor.rgb,uColor.a*vFog);}`;
-
-const ORG_VS=`#version 300 es
-precision highp float;
-in vec3 aPos;
-uniform mat4 uModel;
-uniform mat4 uVP;
-uniform float uCamZ;
-out float vFog;
-void main(){
-  vec4 world=uModel*vec4(aPos,1.0);
-  vec4 clip=uVP*world;
-  gl_Position=clip;
-  float ndcFog=1.0-smoothstep(0.85,0.99,clip.z/clip.w);
-  float dist=abs(world.z+uCamZ);
-  float df=1.0-smoothstep(8.0,210.0,dist);
-  vFog=ndcFog*df;
-}`;
-
-const ORG_FS=`#version 300 es
-precision mediump float;
-in float vFog;
-uniform vec3 uColor;
-out vec4 fc;
-void main(){fc=vec4(uColor*1.35,0.55*vFog);}`;
-
-const PT_VS=`#version 300 es
-precision highp float;
-in vec3 aPos;
-uniform mat4 uVP;
-uniform float uT;
-uniform float uCamZ;
-uniform vec3 uAccent;
-out float vAlpha;
-out vec3  vCol;
-out float vBlur;
-void main(){
-  vec3 p=aPos;
-  p.x+=sin(uT*.13+aPos.z*.06)*.85;
-  p.y+=cos(uT*.10+aPos.x*.08)*.50;
-  vec4 clip=uVP*vec4(p,1.0);
-  gl_Position=clip;
-  float dist=abs(p.z+uCamZ);
-  float focal=28.0;
-  float blur=clamp(abs(dist-focal)/85.0,0.0,1.0);
-  float szBase=mix(1.4,5.8,blur)+(1.0-blur)*1.2;
-  gl_PointSize=max(szBase*(280.0/max(-clip.z,1.0)),0.5);
-  float ndcFog=1.0-smoothstep(0.15,0.97,clip.z/clip.w);
-  float df=1.0-smoothstep(18.0,290.0,dist);
-  vAlpha=df*ndcFog*mix(0.78,0.11,blur);
-  vBlur=blur;
-  vCol=mix(vec3(0.72,0.84,1.0),uAccent,0.38*df);
-}`;
-
-const PT_FS=`#version 300 es
-precision mediump float;
-in float vAlpha;
-in vec3  vCol;
-in float vBlur;
-out vec4 fc;
-void main(){
-  vec2 pc=gl_PointCoord-.5;
-  float r=length(pc);
-  float sig=mix(.21,.48,vBlur);
-  float c=exp(-(r*r)/(2.0*sig*sig));
-  if(c<.01)discard;
-  fc=vec4(vCol,vAlpha*c);
-}`;
-
-// ─── Renderer ─────────────────────────────────────────────────────────────────
-class Renderer {
-  constructor(canvas) {
-    this.canvas=canvas;
-    const gl=canvas.getContext('webgl2',{antialias:true,alpha:false});
-    if(!gl) throw new Error('WebGL2 unavailable');
-    this.gl=gl;
-    this.W=this.H=0;
-    this.t=0;
-    this.camZ=6;   this.camZT=6;
-    this.tilt=0;   this.tiltT=0;
-    this.accent=[.7,.85,1]; this.accentT=[.7,.85,1];
-    this.mx=0;     this.my=0;
-  }
-
-  async init() {
-    const gl=this.gl;
-    this._lp=this._prog(LINE_VS,LINE_FS);
-    this._op=this._prog(ORG_VS, ORG_FS);
-    this._pp=this._prog(PT_VS,  PT_FS);
-
-    const c=buildCreature();
-    this._cr={
-      sBuf:this._vb(c.spine),  sN:c.sN,
-      hBuf:this._vb(c.halos),  hm:c.hm,
-      tBuf:this._vb(c.tendrils),tm:c.tm,
-    };
-
-    this._orgs=buildOrganisms();
-    this._orgRingBufs=this._orgs.map(o=>
-      o.rings.map(r=>({b:this._vb(ringVerts(r,36)),n:37}))
-    );
-
-    const pts=buildParticles(750);
-    this._ptB=this._vb(pts); this._ptN=pts.length/3;
-
-    const sr=ringVerts(14,96); this._srB=this._vb(sr); this._srN=97;
-
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA,gl.ONE);
-    gl.disable(gl.DEPTH_TEST);
-    gl.clearColor(.008,.020,.063,1);
-
-    document.addEventListener('mousemove',e=>{
-      this.mx=(e.clientX/window.innerWidth -.5)*2;
-      this.my=(e.clientY/window.innerHeight-.5)*2;
-    });
-    window.addEventListener('resize',()=>this._rsz());
-    this._rsz();
-    return this;
-  }
-
-  _rsz(){this.W=this.canvas.width=innerWidth;this.H=this.canvas.height=innerHeight;this.gl.viewport(0,0,this.W,this.H);}
-
-  _vb(data){const gl=this.gl,b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);return b;}
-
-  _prog(vs,fs){
-    const gl=this.gl;
-    const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);
-      if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh;};
-    const p=gl.createProgram();
-    gl.attachShader(p,mk(gl.VERTEX_SHADER,vs));
-    gl.attachShader(p,mk(gl.FRAGMENT_SHADER,fs));
-    gl.linkProgram(p);
-    if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
-    return p;
-  }
-
-  setAccent(rgb){this.accentT=rgb;}
-  setCamZ(z,tilt=0){this.camZT=z;this.tiltT=tilt;}
-
-  frame(dt){
-    const gl=this.gl; this.t+=dt; const t=this.t;
-    this.camZ +=(this.camZT  -this.camZ )*.026;
-    this.tilt +=(this.tiltT  -this.tilt )*.026;
-    for(let i=0;i<3;i++) this.accent[i]+=(this.accentT[i]-this.accent[i])*.04;
-
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    const P=persp(1.1,this.W/this.H,.5,500);
-    const V=mul(mul(rx(this.my*.055+this.tilt),ry(this.mx*.07)),tr(0,0,-this.camZ));
-    const VP=mul(P,V);
-
-    this._drawOrgs(VP,t);
-    this._drawSecMarkers(VP,t);
-    this._drawPts(VP,t);
-    this._drawCreature(VP,t);
-  }
-
-  // ── organism rings ──────────────────────────────────────────────────────────
-  _drawOrgs(VP,t){
-    const gl=this.gl,p=this._op;
-    gl.useProgram(p);
-    const vpLoc=gl.getUniformLocation(p,'uVP');
-    const mLoc =gl.getUniformLocation(p,'uModel');
-    const cLoc =gl.getUniformLocation(p,'uColor');
-    const czLoc=gl.getUniformLocation(p,'uCamZ');
-    const posLoc=gl.getAttribLocation(p,'aPos');
-    gl.uniformMatrix4fv(vpLoc,false,VP);
-    gl.uniform1f(czLoc,this.camZ);
-
-    this._orgs.forEach((o,i)=>{
-      const spin=t*(.075+i*.011)+i*1.4;
-      const model=mul(tr(o.x,o.y+Math.sin(t*.28+i*.85)*.38,o.z),mul(ry(spin),rx(Math.sin(t*.42+i)*.12)));
-      gl.uniformMatrix4fv(mLoc,false,model);
-      gl.uniform3f(cLoc,...o.color);
-      this._orgRingBufs[i].forEach(rb=>{
-        gl.bindBuffer(gl.ARRAY_BUFFER,rb.b);
-        gl.enableVertexAttribArray(posLoc);
-        gl.vertexAttribPointer(posLoc,3,gl.FLOAT,false,0,0);
-        gl.drawArrays(gl.LINE_STRIP,0,rb.n);
-      });
-    });
-  }
-
-  // ── section portal rings ────────────────────────────────────────────────────
-  _drawSecMarkers(VP,t){
-    for(const s of window.SECTIONS){
-      const pulse=.065+.032*Math.sin(t*.5+s.camZ*.01);
-      // outer
-      this._lines(this._srB,this._srN, mul(VP,mul(tr(0,0,-s.camZ),rx(Math.PI/2))), s.color, pulse);
-      // inner smaller
-      this._lines(this._srB,this._srN, mul(VP,mul(tr(0,0,-s.camZ),mul(rx(Math.PI/2),sc(.55,.55,1)))), s.color, pulse*.5);
-    }
-  }
-
-  // ── particles ───────────────────────────────────────────────────────────────
-  _drawPts(VP,t){
-    const gl=this.gl,p=this._pp;
-    gl.useProgram(p);
-    gl.bindBuffer(gl.ARRAY_BUFFER,this._ptB);
-    const loc=gl.getAttribLocation(p,'aPos');
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
-    gl.uniformMatrix4fv(gl.getUniformLocation(p,'uVP'),false,VP);
-    gl.uniform1f(gl.getUniformLocation(p,'uT'),t);
-    gl.uniform1f(gl.getUniformLocation(p,'uCamZ'),this.camZ);
-    gl.uniform3f(gl.getUniformLocation(p,'uAccent'),...this.accent);
-    gl.drawArrays(gl.POINTS,0,this._ptN);
-  }
-
-  // ── creature ────────────────────────────────────────────────────────────────
-  _drawCreature(VP,t){
-    const cr=this._cr;
-    const swX=Math.sin(t*.58)*.52, swY=Math.cos(t*.43)*.28;
-    const worldZ=-(this.camZ-8);
-    const model=mul(tr(swX,swY,worldZ),mul(ry(t*.42),rx(Math.sin(t*.33)*.17)));
-    const MVP=mul(VP,model);
-
-    // spine — two passes (bright + soft glow)
-    this._lines(cr.sBuf,cr.sN,MVP,[.92,.96,1.0],.82);
-    this._lines(cr.sBuf,cr.sN,MVP,[.6,.82,1.0],.22);
-
-    // halos
-    cr.hm.forEach((h,i)=>{
-      const a=.26+.13*Math.sin(t*1.05+i*.85);
-      this._linesOff(cr.hBuf,h.s,h.n,MVP,[.88,.93,1.0],a);
-    });
-
-    // tendrils
-    cr.tm.forEach((ten,i)=>{
-      const a=.11+.07*Math.sin(t*.72+i*.6);
-      this._linesOff(cr.tBuf,ten.s,ten.n,MVP,[.72,.88,1.0],a);
-    });
-  }
-
-  // ── low-level draw ──────────────────────────────────────────────────────────
-  _lines(buf,n,MVP,rgb,a){
-    const gl=this.gl,p=this._lp;
-    gl.useProgram(p);
-    gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-    const loc=gl.getAttribLocation(p,'aPos');
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
-    gl.uniformMatrix4fv(gl.getUniformLocation(p,'uMVP'),false,MVP);
-    gl.uniform4f(gl.getUniformLocation(p,'uColor'),...rgb,a);
-    gl.uniform1f(gl.getUniformLocation(p,'uCamZ'),this.camZ);
-    gl.drawArrays(gl.LINE_STRIP,0,n);
-  }
-
-  _linesOff(buf,start,n,MVP,rgb,a){
-    const gl=this.gl,p=this._lp;
-    gl.useProgram(p);
-    gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-    const loc=gl.getAttribLocation(p,'aPos');
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,start*12);
-    gl.uniformMatrix4fv(gl.getUniformLocation(p,'uMVP'),false,MVP);
-    gl.uniform4f(gl.getUniformLocation(p,'uColor'),...rgb,a);
-    gl.uniform1f(gl.getUniformLocation(p,'uCamZ'),this.camZ);
-    gl.drawArrays(gl.LINE_STRIP,0,n);
-  }
-}
-
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-(async()=>{
-  const canvas=document.getElementById('c');
-  let R;
-  try{ R=await new Renderer(canvas).init(); }
-  catch(e){ console.error(e); document.querySelector('#loading p').textContent='webgl2 unavailable'; return; }
-  window.renderer=R;
-  setTimeout(()=>document.getElementById('loading').classList.add('done'),700);
-  let last=performance.now();
-  const loop=now=>{ R.frame(Math.min((now-last)*.001,.05)); last=now; requestAnimationFrame(loop); };
-  requestAnimationFrame(loop);
-})();
-
-</script>
-<script>
-// ui.js — navigation, sections, cursor
-
-// ─── Cursor ─────────────────────────────────────────────────────────────────
-(function() {
-  const cur   = document.getElementById('cur');
-  const trail = document.getElementById('cur-trail');
-  let mx=0, my=0, tx=0, ty=0;
-
-  document.addEventListener('mousemove', e => {
-    mx = e.clientX; my = e.clientY;
-    cur.style.left = mx + 'px';
-    cur.style.top  = my + 'px';
-  });
-
-  (function lerp() {
-    tx += (mx - tx) * 0.10;
-    ty += (my - ty) * 0.10;
-    trail.style.left = tx + 'px';
-    trail.style.top  = ty + 'px';
-    requestAnimationFrame(lerp);
-  })();
-
-  document.querySelectorAll('a,button,.node,.s,.pc').forEach(el => {
-    el.addEventListener('mouseenter', () => cur.classList.add('big'));
-    el.addEventListener('mouseleave', () => cur.classList.remove('big'));
-  });
-})();
-
-// ─── Section content ─────────────────────────────────────────────────────────
-const PANELS = {
-  about: {
-    color: 'red',
-    label: '01',
-    title: 'about',
-    html: `
-      <p class="body">
-        final-year computer science student at <strong>habib university, karachi</strong>,
-        specialising in computer vision, machine learning, and explainable ai. work centres
-        on building deep learning systems that are not only performant but interpretable —
-        models worth trusting.
-      </p>
-      <p class="body">
-        three years as a <strong>teaching assistant</strong> across nine courses, two-time
-        top performing student employee. researcher across sentiment analysis, music
-        recommendation, and plant disease detection. currently targeting graduate programs
-        in computer graphics and scientific visualisation — uoft dgp, ubc imager,
-        eth zurich, epfl.
-      </p>
-      <p class="body">
-        outside research: podcast host at <strong>habib university runway radio</strong>,
-        design lead at the arts &amp; cultural club, featured digital artist in the arzu anthology.
-        dark fantasy and gothic aesthetics inform all creative work.
-      </p>
-      <div class="stats">
-        <div class="stat"><b>3.95</b><small>gpa / 4.0</small></div>
-        <div class="stat"><b>9×</b><small>ta roles</small></div>
-        <div class="stat"><b>97%</b><small>peak f1</small></div>
-        <div class="stat"><b>6×</b><small>dean's list</small></div>
-      </div>`
-  },
-
-  exp: {
-    color: 'blue',
-    label: '02',
-    title: 'experience',
-    html: `
-      <div class="tline">
-        <div class="ti">
-          <div class="ti-date">2025 — present</div>
-          <div class="ti-role">mcp server developer (intern)</div>
-          <div class="ti-org">ejento ai / data science dojo</div>
-          <ul><li>building mcp server integrations, agent templates, and qa pipelines.</li></ul>
+    <div id="ui">
+        <div id="hub">
+            <div class="node" id="n-about"><div class="node-box sequential-pulse"><div class="node-n">01</div><div class="node-l sequential-glow">about</div></div></div>
+            <div class="node" id="n-exp"><div class="node-box sequential-pulse"><div class="node-n">02</div><div class="node-l sequential-glow">experience</div></div></div>
+            <div class="node" id="n-projects"><div class="node-box sequential-pulse"><div class="node-n">03</div><div class="node-l sequential-glow">projects</div></div></div>
+            <div class="node" id="n-skills"><div class="node-box sequential-pulse"><div class="node-n">04</div><div class="node-l sequential-glow">skills</div></div></div>
+            <div class="node" id="n-contact"><div class="node-box sequential-pulse"><div class="node-n">05</div><div class="node-l sequential-glow">contact</div></div></div>
         </div>
-        <div class="ti">
-          <div class="ti-date">aug 2023 — present</div>
-          <div class="ti-role">teaching assistant</div>
-          <div class="ti-org">habib university</div>
-          <ul>
-            <li>supported ~30 students per course across 9 courses through recitations and lab guidance.</li>
-            <li>received top performing student employee award twice.</li>
-          </ul>
+
+        <div id="hero">
+            <h1>zuhair <em>abbas</em></h1>
+            <p>computer graphics · computer vision · machine learning</p>
+            <small>select a node</small>
         </div>
-        <div class="ti">
-          <div class="ti-date">may 2025 — aug 2025</div>
-          <div class="ti-role">undergraduate researcher — music recommendation</div>
-          <div class="ti-org">habib university</div>
-          <ul>
-            <li>fine-tuned google t5 to map natural language prompts to audio features.</li>
-            <li>achieved ensemble accuracy of 80% across audio feature dimensions.</li>
-          </ul>
-        </div>
-        <div class="ti">
-          <div class="ti-date">may 2024 — aug 2024</div>
-          <div class="ti-role">undergraduate researcher — sentiment analysis</div>
-          <div class="ti-org">habib university</div>
-          <ul>
-            <li>built pipelines to collect, transcribe, and classify news video on price inflation sentiment.</li>
-            <li>fine-tuned mdeberta and xlm-roberta; f1 of 81%.</li>
-          </ul>
-        </div>
-      </div>`
-  },
 
-  projects: {
-    color: 'green',
-    label: '03',
-    title: 'projects',
-    html: `
-      <div class="pgrid">
-        <div class="pc">
-          <div class="pc-tag">computer vision · xai</div><div class="pc-score">f1 97%</div>
-          <div class="pc-title">explainable multi-crop disease detection</div>
-          <p class="pc-desc">extended mobilevit for multi-crop plant disease classification. eigen-cam and feature ablation validate attention on necrotic lesion regions. cvpr v4a workshop submission.</p>
-          <div class="pc-tech"><span class="pt">vision transformers</span><span class="pt">eigen-cam</span><span class="pt">pytorch</span></div>
-        </div>
-        <div class="pc">
-          <div class="pc-tag">webgl 2.0 · graphics</div><div class="pc-score">cs 440</div>
-          <div class="pc-title">procedural planet renderer</div>
-          <p class="pc-desc">webgl 2.0 renderer with simplex-noise terrain, blinn-phong shading, pcf shadow mapping, bloom post-processing, and procedural forest placement.</p>
-          <div class="pc-tech"><span class="pt">webgl 2.0</span><span class="pt">glsl</span><span class="pt">shadow maps</span><span class="pt">bloom</span></div>
-        </div>
-        <div class="pc">
-          <div class="pc-tag">3d vision · robotics</div><div class="pc-score">1 hz mapping</div>
-          <div class="pc-title">3d robot perception for cave environments</div>
-          <p class="pc-desc">procedural lava tube generation. real-time elevation mapping for point clouds and posture adaptation for a quadruped in low-clearance traversal.</p>
-          <div class="pc-tech"><span class="pt">ros2</span><span class="pt">gazebo</span><span class="pt">blender</span><span class="pt">zed2</span></div>
-        </div>
-        <div class="pc">
-          <div class="pc-tag">cnns · signal processing</div><div class="pc-score">f1 &gt;95%</div>
-          <div class="pc-title">bearing fault classification</div>
-          <p class="pc-desc">trained cnns to classify bearing fault patterns across time and frequency representations under severe noise conditions.</p>
-          <div class="pc-tech"><span class="pt">cnns</span><span class="pt">tensorflow</span><span class="pt">signal processing</span></div>
-        </div>
-        <div class="pc">
-          <div class="pc-tag">segmentation · zero-shot</div><div class="pc-score">iou 75%</div>
-          <div class="pc-title">crack segmentation via multichannel fusion</div>
-          <p class="pc-desc">zero-shot pipeline fusing intensity, saliency, and hessian feature maps. no gpu training required.</p>
-          <div class="pc-tech"><span class="pt">opencv</span><span class="pt">hessian</span><span class="pt">zero-shot</span></div>
-        </div>
-        <div class="pc">
-          <div class="pc-tag">llms · automation</div><div class="pc-score">1.25 hr/100 saved</div>
-          <div class="pc-title">llama 3 email outreach pipeline</div>
-          <p class="pc-desc">end-to-end pipeline for generating and dispatching personalised outreach emails for ngo campaigns using llama 3.</p>
-          <div class="pc-tech"><span class="pt">llama 3</span><span class="pt">node.js</span><span class="pt">express</span></div>
-        </div>
-      </div>`
-  },
+        <div id="overlay"></div>
+    </div>
 
-  skills: {
-    color: 'purple',
-    label: '04',
-    title: 'skills',
-    html: `
-      <div class="sgrid">
-        <div class="sg">
-          <div class="sg-t">graphics &amp; gpu</div>
-          <div class="si">
-            <span class="s">webgl 2.0</span><span class="s">webgpu</span><span class="s">glsl</span>
-            <span class="s">wgsl</span><span class="s">opengl</span><span class="s">cuda</span>
-            <span class="s">opencl</span><span class="s">vulkan</span><span class="s">metal</span>
-            <span class="s">directx</span><span class="s">blender</span>
-          </div>
-        </div>
-        <div class="sg">
-          <div class="sg-t">systems &amp; compute</div>
-          <div class="si">
-            <span class="s">c++</span><span class="s">c</span>
-            <span class="s">parallel computing</span><span class="s">multithreading</span>
-            <span class="s">numerical methods</span><span class="s">computational geometry</span>
-            <span class="s">physics simulation</span><span class="s">linux</span>
-          </div>
-        </div>
-        <div class="sg">
-          <div class="sg-t">machine learning</div>
-          <div class="si">
-            <span class="s">pytorch</span><span class="s">tensorflow</span><span class="s">keras</span>
-            <span class="s">hugging face</span><span class="s">scikit-learn</span>
-            <span class="s">pandas</span><span class="s">numpy</span>
-          </div>
-        </div>
-        <div class="sg">
-          <div class="sg-t">vision &amp; robotics</div>
-          <div class="si">
-            <span class="s">opencv</span><span class="s">ros2</span><span class="s">gazebo</span>
-            <span class="s">zed2</span><span class="s">point clouds</span><span class="s">elevation mapping</span>
-          </div>
-        </div>
-        <div class="sg">
-          <div class="sg-t">languages</div>
-          <div class="si">
-            <span class="s">python</span><span class="s">c++</span><span class="s">javascript</span>
-            <span class="s">matlab</span><span class="s">node.js</span><span class="s">vue.js</span>
-            <span class="s">mysql</span><span class="s">latex</span>
-          </div>
-        </div>
-        <div class="sg">
-          <div class="sg-t">tools</div>
-          <div class="si">
-            <span class="s">git</span><span class="s">docker</span><span class="s">jira</span>
-            <span class="s">photoshop</span><span class="s">illustrator</span>
-          </div>
-        </div>
-      </div>`
-  },
+    <button id="back">← return</button>
 
-  contact: {
-    color: 'white',
-    label: '05',
-    title: 'contact',
-    html: `
-      <p class="body" style="max-width:500px">
-        open to research collaborations, graduate program discussions, and compelling
-        problems in computer vision and machine learning. based in karachi —
-        available globally.
-      </p>
-      <div class="clinks">
-        <a href="mailto:zuhair.abbas2503@gmail.com" class="cl2">
-          <div><div class="clink-label cl2-l">email</div><div class="cl2-v">zuhair.abbas2503@gmail.com</div></div>
-          <span class="clink-arr cl2-a">→</span>
-        </a>
-        <a href="https://github.com/zuhairs-account" target="_blank" class="cl2">
-          <div><div class="clink-label cl2-l">github</div><div class="cl2-v">github.com/zuhairs-account</div></div>
-          <span class="clink-arr cl2-a">→</span>
-        </a>
-        <a href="https://linkedin.com/in/zuhairabbas" target="_blank" class="cl2">
-          <div><div class="clink-label cl2-l">linkedin</div><div class="cl2-v">linkedin.com/in/zuhairabbas</div></div>
-          <span class="clink-arr cl2-a">→</span>
-        </a>
-      </div>
-      <div class="motto">
-        perception without interpretation is noise.<br>
-        intelligence is the act of making meaning.
-      </div>`
-  }
-};
+    <script>
+        /* ═══════════════════════════════════════════════════════════
+           PERFORMANCE-OPTIMIZED SCRIPT
+           - Removed custom cursor
+           - Reduced wave segments, removed shadowBlur
+           - Removed backdrop-filter (heavy)
+           - Simplified node effects
+           - Lowered shape draw complexity
+        ═══════════════════════════════════════════════════════════ */
 
-// ─── Build panels ─────────────────────────────────────────────────────────────
-const overlay = document.getElementById('overlay');
+        // ── wave fabric (optimized) ──
+        const waveCanvas = document.getElementById('c-wave');
+        const waveCtx = waveCanvas.getContext('2d');
+        function resizeWave() {
+            waveCanvas.width = window.innerWidth;
+            waveCanvas.height = window.innerHeight;
+        }
+        resizeWave();
+        window.addEventListener('resize', resizeWave);
 
-for (const [key, data] of Object.entries(PANELS)) {
-  const div = document.createElement('div');
-  div.className = 'sec-panel';
-  div.dataset.color = data.color;
-  div.dataset.section = key;
-  div.style.display = 'none';
-  div.innerHTML = `
-    <div class="sec-label">${data.label}</div>
-    <h2 class="sec-title">${data.title}</h2>
-    ${data.html}
-  `;
-  overlay.appendChild(div);
-}
+        const WAVE_CONFIG = {
+            amplitude: 0.14,
+            speed: 0.3,
+            segments: 120,                 // reduced from 180
+            fillOpacity: 0.15,
+            fillColor: '#000000',
+            edgeOpacity: 0.6,
+            edgeWidth: 1.4,
+            glowBlur: 0,                  // no expensive blur
+            glowColor: 'rgba(255,255,255,0.15)',
+            glowWidth: 2.0,
+        };
 
-// ─── Navigation state ─────────────────────────────────────────────────────────
-const hub      = document.getElementById('hub');
-const heroEl   = document.getElementById('hero');
-const backBtn  = document.getElementById('back');
+        function drawWave(time) {
+            const w = waveCanvas.width, h = waveCanvas.height;
+            waveCtx.clearRect(0, 0, w, h);
+            const amp = h * WAVE_CONFIG.amplitude;
+            const startX = -w * 0.05, endX = w * 1.05;
+            const span = endX - startX;
+            const step = span / WAVE_CONFIG.segments;
+            const centerY = h * 0.45;
+            const topPts = [], bottomPts = [];
 
-let state = 'hub';
-let currentPanel = null;
+            for (let i = 0; i <= WAVE_CONFIG.segments; i++) {
+                const x = startX + i * step;
+                const nx = (x - startX) / span;
+                let topY = centerY - h * 0.1;
+                topY += Math.sin(nx * Math.PI * 2.8 + time * 0.42 + 1.2) * amp * 0.85;
+                topY += Math.sin(nx * Math.PI * 7.1 + time * 0.55 + 0.6) * amp * 0.18;
+                topY += Math.cos(nx * Math.PI * 12.3 + time * 0.38) * amp * 0.08;
+                let bottomY = centerY + h * 0.1;
+                bottomY += Math.sin(nx * Math.PI * 2.1 + time * 0.33 + 0.4) * amp * 1.05;
+                bottomY += Math.cos(nx * Math.PI * 5.7 + time * 0.48 + 2.3) * amp * 0.22;
+                bottomY += Math.sin(nx * Math.PI * 10.5 + time * 0.52) * amp * 0.12;
+                topPts.push({ x, y: topY });
+                bottomPts.push({ x, y: bottomY });
+            }
 
-const nodeToSection = {
-  'n-about':    'about',
-  'n-exp':      'exp',
-  'n-projects': 'projects',
-  'n-skills':   'skills',
-  'n-contact':  'contact',
-};
+            waveCtx.save();
+            // Fill band
+            waveCtx.globalAlpha = WAVE_CONFIG.fillOpacity;
+            waveCtx.fillStyle = WAVE_CONFIG.fillColor;
+            waveCtx.beginPath();
+            waveCtx.moveTo(topPts[0].x, topPts[0].y);
+            for (let i = 1; i < topPts.length; i++) waveCtx.lineTo(topPts[i].x, topPts[i].y);
+            for (let i = bottomPts.length - 1; i >= 0; i--) waveCtx.lineTo(bottomPts[i].x, bottomPts[i].y);
+            waveCtx.closePath();
+            waveCtx.fill();
 
-const sectionToZ = {
-  'about':    { z: 40,  tilt: 0.04 },
-  'exp':      { z: 90,  tilt: 0.06 },
-  'projects': { z: 140, tilt: -0.04 },
-  'skills':   { z: 190, tilt: 0.05 },
-  'contact':  { z: 240, tilt: 0.0 },
-};
+            // Soft glow edges (no shadow blur)
+            waveCtx.globalAlpha = 0.35;
+            waveCtx.strokeStyle = WAVE_CONFIG.glowColor;
+            waveCtx.lineWidth = WAVE_CONFIG.glowWidth;
+            waveCtx.beginPath(); waveCtx.moveTo(topPts[0].x, topPts[0].y);
+            for (let i = 1; i < topPts.length; i++) waveCtx.lineTo(topPts[i].x, topPts[i].y);
+            waveCtx.stroke();
+            waveCtx.beginPath(); waveCtx.moveTo(bottomPts[0].x, bottomPts[0].y);
+            for (let i = 1; i < bottomPts.length; i++) waveCtx.lineTo(bottomPts[i].x, bottomPts[i].y);
+            waveCtx.stroke();
 
-const sectionToAccent = {
-  'about':    [1.0, 0.25, 0.25],
-  'exp':      [0.25, 0.55, 1.0],
-  'projects': [0.25, 0.85, 0.50],
-  'skills':   [0.65, 0.32, 1.0],
-  'contact':  [1.0,  1.0,  1.0],
-};
+            // Dark core edges
+            waveCtx.globalAlpha = WAVE_CONFIG.edgeOpacity;
+            waveCtx.strokeStyle = '#000';
+            waveCtx.lineWidth = WAVE_CONFIG.edgeWidth;
+            waveCtx.beginPath(); waveCtx.moveTo(topPts[0].x, topPts[0].y);
+            for (let i = 1; i < topPts.length; i++) waveCtx.lineTo(topPts[i].x, topPts[i].y);
+            waveCtx.stroke();
+            waveCtx.beginPath(); waveCtx.moveTo(bottomPts[0].x, bottomPts[0].y);
+            for (let i = 1; i < bottomPts.length; i++) waveCtx.lineTo(bottomPts[i].x, bottomPts[i].y);
+            waveCtx.stroke();
 
-function diveInto(sectionKey) {
-  if (state === 'section') return;
-  state = 'section';
+            waveCtx.restore();
+        }
 
-  // Camera dive
-  const { z, tilt } = sectionToZ[sectionKey];
-  const accent = sectionToAccent[sectionKey];
-  if (window.renderer) {
-    window.renderer.setCamZ(z, tilt);
-    window.renderer.setAccent(accent);
-  }
+        // ── 3D shapes (unchanged, but already lightweight) ──
+        const shapesCanvas = document.getElementById('c-shapes');
+        const shapesCtx = shapesCanvas.getContext('2d');
+        function resizeShapes() {
+            shapesCanvas.width = window.innerWidth;
+            shapesCanvas.height = window.innerHeight;
+        }
+        resizeShapes();
+        window.addEventListener('resize', resizeShapes);
 
-  // Hide hub
-  hub.style.opacity = '0';
-  hub.style.pointerEvents = 'none';
-  heroEl.style.opacity = '0';
+        const GEOMETRIES = {
+            tetra: { verts: [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]], edges: [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]] },
+            cube: {
+                verts: (() => { const v=[]; for(let x=-1;x<=1;x+=2)for(let y=-1;y<=1;y+=2)for(let z=-1;z<=1;z+=2)v.push([x,y,z]); return v; })(),
+                edges: (() => { const e=[]; for(let i=0;i<8;i++)for(let j=i+1;j<8;j++){const xor=i^j; if(xor===1||xor===2||xor===4)e.push([i,j]);} return e; })()
+            },
+            octa: { verts: [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]], edges: [[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[2,5],[3,4],[3,5]] }
+        };
+        const GEO_NAMES = Object.keys(GEOMETRIES);
 
-  // Show panel after camera starts moving
-  setTimeout(() => {
-    document.querySelectorAll('.sec-panel').forEach(p => p.style.display = 'none');
-    const panel = overlay.querySelector(`[data-section="${sectionKey}"]`);
-    if (panel) { panel.style.display = 'block'; currentPanel = panel; }
-    overlay.classList.add('vis');
-  }, 400);
+        function rotateVertex(v,rx,ry,rz){let[x,y,z]=v;const cx=Math.cos(rx),sx=Math.sin(rx);let y1=y*cx-z*sx,z1=y*sx+z*cx;y=y1;z=z1;const cy=Math.cos(ry),sy=Math.sin(ry);let x1=x*cy+z*sy,z2=-x*sy+z*cy;x=x1;z=z2;const cz=Math.cos(rz),sz=Math.sin(rz);let x2=x*cz-y*sz,y2=x*sz+y*cz;return[x2,y2,z];}
+        function project(v,size,px,py){const p=1/(1+v[2]*0.22);return[px+v[0]*size*p,py+v[1]*size*p];}
 
-  backBtn.classList.add('vis');
-}
+        function columnPositions(count,w,h){
+            const positions=[],leftCount=Math.floor(count/2),rightCount=count-leftCount;
+            const colWidth=w*0.12,leftX=w*0.04,rightX=w*0.84;
+            function gen(xBase,n){const spacing=h/(n+1);for(let i=0;i<n;i++){const y=spacing*(i+1)+(Math.random()-0.5)*(spacing*0.25);positions.push({x:xBase+Math.random()*colWidth,y:Math.min(h-10,Math.max(10,y))});}}
+            gen(leftX,leftCount); gen(rightX,rightCount);
+            return positions;
+        }
 
-function returnToHub() {
-  if (state === 'hub') return;
-  state = 'hub';
+        function generateShapeSet(count,w,h){
+            const positions=columnPositions(count,w,h);
+            const shapes=[],usedGeos=[];
+            for(let i=0;i<count;i++){
+                const pos=positions[i];
+                let avail=GEO_NAMES.filter(g=>!usedGeos.includes(g));
+                if(avail.length===0){const last=usedGeos[usedGeos.length-1];avail=GEO_NAMES.filter(g=>g!==last);if(avail.length===0)avail=[...GEO_NAMES];}
+                const geoName=avail[Math.floor(Math.random()*avail.length)];
+                usedGeos.push(geoName);
+                shapes.push({geoName,geo:GEOMETRIES[geoName],px:pos.x,py:pos.y,size:28+Math.random()*24,rx:Math.random()*Math.PI*2,ry:Math.random()*Math.PI*2,rz:Math.random()*Math.PI*2,rsx:(Math.random()-0.5)*0.5,rsy:(Math.random()-0.5)*0.5,rsz:(Math.random()-0.5)*0.35,alpha:1,driftX:0,driftY:0});
+            }
+            return shapes;
+        }
 
-  overlay.classList.remove('vis');
-  setTimeout(() => {
-    if (currentPanel) currentPanel.style.display = 'none';
-  }, 600);
+        let hubShapes=[],sectionShapes=null,shapeMix=0,shapeMixTarget=0;
+        const shapeTransitionSpeed=2.0;
+        function initHubShapes(){hubShapes=generateShapeSet(5,shapesCanvas.width,shapesCanvas.height);}
+        initHubShapes();
+        window.addEventListener('resize',()=>{
+            resizeWave(); resizeShapes();
+            const w=shapesCanvas.width,h=shapesCanvas.height;
+            hubShapes=generateShapeSet(5,w,h);
+            if(sectionShapes)sectionShapes=generateShapeSet(4,w,h);
+            updateNodePositions();
+        });
+        function ensureSectionShapes(){if(!sectionShapes)sectionShapes=generateShapeSet(4,shapesCanvas.width,shapesCanvas.height);}
+        function updateAndDrawShapes(dt,time){
+            const w=shapesCanvas.width,h=shapesCanvas.height;
+            shapesCtx.clearRect(0,0,w,h);
+            const diff=shapeMixTarget-shapeMix;shapeMix+=diff*Math.min(1,shapeTransitionSpeed*dt);
+            if(Math.abs(diff)<0.001)shapeMix=shapeMixTarget;
+            const ha=1-shapeMix,sa=shapeMix;
+            for(const s of hubShapes){
+                s.rx+=s.rsx*dt;s.ry+=s.rsy*dt;s.rz+=s.rsz*dt;
+                s.px+=s.driftX*dt*3;s.py+=s.driftY*dt*3;
+                if(s.px<-40)s.px=w+40;if(s.px>w+40)s.px=-40;
+                if(s.py<-40)s.py=h+40;if(s.py>h+40)s.py=-40;
+                if(ha>0.005)drawShape(s,ha,false);
+            }
+            if(sectionShapes&&sa>0.005){for(const s of sectionShapes){
+                s.rx+=s.rsx*dt;s.ry+=s.rsy*dt;s.rz+=s.rsz*dt;
+                s.px+=s.driftX*dt*3;s.py+=s.driftY*dt*3;
+                if(s.px<-40)s.px=w+40;if(s.px>w+40)s.px=-40;
+                if(s.py<-40)s.py=h+40;if(s.py>h+40)s.py=-40;
+                drawShape(s,sa,true);
+            }}
+        }
+        function drawShape(s,alpha,isSection){
+            const geo=s.geo;
+            const rv=geo.verts.map(v=>rotateVertex(v,s.rx,s.ry,s.rz));
+            const pj=rv.map(v=>project(v,s.size,s.px,s.py));
+            const color=isSection?`rgba(230,20,40,${alpha*0.65})`:`rgba(255,255,255,${alpha*0.22})`;
+            shapesCtx.strokeStyle=color;shapesCtx.lineWidth=isSection?1.0:0.8;shapesCtx.lineCap='round';
+            shapesCtx.beginPath();
+            for(const[i,j]of geo.edges){shapesCtx.moveTo(pj[i][0],pj[i][1]);shapesCtx.lineTo(pj[j][0],pj[j][1]);}
+            shapesCtx.stroke();
+            shapesCtx.fillStyle=isSection?`rgba(230,20,40,${alpha*0.55})`:`rgba(255,255,255,${alpha*0.3})`;
+            for(const p of pj){shapesCtx.beginPath();shapesCtx.arc(p[0],p[1],1.0,0,Math.PI*2);shapesCtx.fill();}
+        }
+        function triggerShapeTransition(toSection){if(toSection){ensureSectionShapes();shapeMixTarget=1;}else{shapeMixTarget=0;}}
 
-  hub.style.opacity = '1';
-  hub.style.pointerEvents = 'auto';
-  heroEl.style.opacity = '1';
-  backBtn.classList.remove('vis');
+        // ── node positioning (unchanged) ──
+        const nodes = document.querySelectorAll('.node');
+        const nodeDrifts = Array.from(nodes, () => ({ x: 0, y: 0 }));
 
-  if (window.renderer) {
-    window.renderer.setCamZ(6, 0);
-    window.renderer.setAccent([0.8, 0.88, 1.0]);
-  }
-}
+        function updateNodePositions() {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight * 0.45;
+            const maxByWidth = window.innerWidth * 0.35;
+            const maxByHeight = window.innerHeight * 0.26;
+            const radius = Math.min(maxByWidth, maxByHeight);
+            const startAngle = -Math.PI / 2;
+            nodes.forEach((node, i) => {
+                const angle = startAngle + (i * 2 * Math.PI) / nodes.length;
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                node.style.left = x + 'px';
+                node.style.top = y + 'px';
+            });
+        }
+        updateNodePositions();
+        window.addEventListener('resize', updateNodePositions);
 
-// ─── Bind nodes ───────────────────────────────────────────────────────────────
-document.querySelectorAll('.node').forEach(node => {
-  const key = nodeToSection[node.id];
-  if (!key) return;
-  node.addEventListener('click', () => diveInto(key));
-});
+        function updateDrifts(dt) {
+            if (state !== 'hub') return;
+            const speed = 0.1;
+            nodeDrifts.forEach(d => {
+                d.x += (Math.random() - 0.5) * speed * dt * 8;
+                d.y += (Math.random() - 0.5) * speed * dt * 8;
+                d.x = Math.max(-10, Math.min(10, d.x));
+                d.y = Math.max(-10, Math.min(10, d.y));
+            });
+        }
 
-backBtn.addEventListener('click', returnToHub);
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') returnToHub();
-});
+        function applyNodeTransforms(mx, my) {
+            if (state !== 'hub') {
+                nodes.forEach(n => { n.style.transform = `translate(-50%, -50%)`; });
+                return;
+            }
+            const w = window.innerWidth, h = window.innerHeight;
+            const nx = (mx / w - 0.5) * 2, ny = (my / h - 0.5) * 2;
+            nodes.forEach((n, i) => {
+                const d = 0.35 + i * 0.11;
+                const px = nx * 14 * d, py = ny * 10 * d;
+                const dx = nodeDrifts[i].x, dy = nodeDrifts[i].y;
+                n.style.transform = `translate(calc(-50% + ${px + dx}px), calc(-50% + ${py + dy}px))`;
+            });
+        }
 
-// ─── Node parallax in hub ────────────────────────────────────────────────────
-document.addEventListener('mousemove', e => {
-  if (state !== 'hub') return;
-  const nx = (e.clientX / window.innerWidth  - 0.5) * 2;
-  const ny = (e.clientY / window.innerHeight - 0.5) * 2;
-  document.querySelectorAll('.node').forEach((n, i) => {
-    const d = 0.4 + i * 0.13;
-    n.style.transform = `translate(calc(-50% + ${nx*22*d}px), calc(-50% + ${ny*14*d}px))`;
-  });
-});
+        // ── main loop ──
+        let lastT = performance.now();
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+        document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
 
-// ─── Hover transitions ────────────────────────────────────────────────────────
-hub.style.transition      = 'opacity .7s';
-heroEl.style.transition   = 'opacity .7s';
+        function loop(now) {
+            const dt = Math.min((now - lastT) * 0.001, 0.05);
+            lastT = now;
+            const time = now * 0.001;
+            drawWave(time);
+            updateAndDrawShapes(dt, time);
+            updateDrifts(dt);
+            applyNodeTransforms(mouseX, mouseY);
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
 
-</script>
+        // ── section content ──
+        const PANELS = {
+            about: { label:'01', title:'about', html:`<p class="body">cs undergraduate at <strong>habib university, karachi</strong>. graduating 2026. research spans computer graphics, 3d computer vision, and learning algorithms — with a preference for problems that sit at the intersection of visual computing and simulation.</p><p class="body">three years as a <strong>teaching assistant</strong> across nine courses at habib university, covering algorithms, data structures, linear algebra, and discrete mathematics.</p><p class="body">targeting graduate programs in computer graphics and scientific visualisation — uoft dgp, ubc imager, eth zurich, epfl. currently building at ejento ai as an intern, working on mcp server integrations and agent pipelines.</p><p class="body" style="margin-top:.4rem">outside of research: digital illustrator, podcast host at <strong>habib university runway radio</strong>, design lead at the arts &amp; cultural club.</p><div class="stats"><div class="stat"><b>3.95</b><small>gpa / 4.0</small></div><div class="stat"><b>9</b><small>courses ta'd</small></div><div class="stat"><b>6×</b><small>dean's list</small></div><div class="stat"><b>3×</b><small>president's list</small></div></div>` },
+            exp: { label:'02', title:'experience', html:`<div class="tline"><div class="ti"><div class="ti-date">2026 — present</div><div class="ti-role">software engineer intern — gen ai / llms</div><div class="ti-org">ejento ai · data science dojo (remote)</div><ul><li>building mcp server integrations, agent templates, and qa pipelines.</li></ul></div><div class="ti"><div class="ti-date">aug 2023 — present</div><div class="ti-role">teaching assistant</div><div class="ti-org">habib university</div><ul><li>supported ~30 students per course across 9 courses: algorithms, data structures, nature of computation, linear algebra, discrete mathematics, database systems, and others.</li><li>received top performing student employee award for cs 101 and cs 102.</li></ul></div><div class="ti"><div class="ti-date">may — aug 2025</div><div class="ti-role">undergraduate researcher — music recommendation</div><div class="ti-org">habib university · advisor: faisal alvi</div><ul><li>fine-tuned google t5 to map natural language prompts to audio features.</li><li>ensemble accuracy of 80% across feature dimensions. presented at tehqiq showcase 2025. paper in preparation.</li></ul></div><div class="ti"><div class="ti-date">may — aug 2024</div><div class="ti-role">undergraduate researcher — sentiment analysis</div><div class="ti-org">habib university · advisor: faisal alvi</div><ul><li>collected, transcribed, and classified urdu-language news video for price inflation sentiment analysis.</li><li>fine-tuned mdeberta and xlm-roberta, achieving f1 of 81%. presented at strp showcase 2024.</li></ul></div><div class="ti"><div class="ti-date">2023</div><div class="ti-role">game art fellow</div><div class="ti-org">mindstorm studios</div></div></div>` },
+            projects: { label:'03', title:'projects', html:`<div class="pgrid"><div class="pc"><div class="pc-tag">computer vision · xai</div><div class="pc-title">multi-crop plant disease detection</div><p class="pc-desc">two-stage multimodal mobilevit pipeline on a consolidated 67k-image dataset spanning 16 crops and 54 disease classes. eigen-cam and monte carlo dropout validate attention localisation on necrotic regions. f1 97%. submitted to cvpr v4a workshop.</p><div class="pc-tech"><span class="pt">mobilevit</span><span class="pt">eigen-cam</span><span class="pt">mcd</span><span class="pt">pytorch</span></div></div><div class="pc"><div class="pc-tag">webgl 2.0 · graphics</div><div class="pc-title">procedural planet renderer</div><p class="pc-desc">real-time renderer with simplex-noise terrain generation, blinn-phong shading, pcf shadow mapping, bloom post-processing, and procedural forest placement. built in webgl 2.0 / glsl.</p><div class="pc-tech"><span class="pt">webgl 2.0</span><span class="pt">glsl</span><span class="pt">shadow maps</span><span class="pt">bloom</span></div></div><div class="pc"><div class="pc-tag">3d vision · robotics</div><div class="pc-title">quadruped perception for confined environments</div><p class="pc-desc">procedural lava tube generation in blender; elevation mapping for 3d point clouds at 1hz; posture adaptation for a quadruped navigating low-clearance uneven terrain in gazebo. abstract submitted to dsse symposium 2026.</p><div class="pc-tech"><span class="pt">ros2</span><span class="pt">gazebo</span><span class="pt">blender</span><span class="pt">zed2</span></div></div><div class="pc"><div class="pc-tag">segmentation · zero-shot</div><div class="pc-title">crack segmentation via multichannel fusion</div><p class="pc-desc">zero-shot pipeline fusing intensity, saliency, and hessian line-like feature maps. no gpu training required. iou 75%, benchmarked against trained ml models.</p><div class="pc-tech"><span class="pt">opencv</span><span class="pt">hessian</span><span class="pt">zero-shot</span></div></div><div class="pc"><div class="pc-tag">deep learning · signal</div><div class="pc-title">bearing fault classification under noise</div><p class="pc-desc">cnns trained on time and frequency representations of vibration data to classify bearing fault patterns under severe noise conditions. f1 above 95%.</p><div class="pc-tech"><span class="pt">cnns</span><span class="pt">tensorflow</span><span class="pt">signal processing</span></div></div><div class="pc"><div class="pc-tag">graphics · ray tracing</div><div class="pc-title">image relighter via ray tracing</div><p class="pc-desc">depth estimation from monocular images; depth-to-mesh conversion; relighting via ray tracing under novel illumination conditions.</p><div class="pc-tech"><span class="pt">ray tracing</span><span class="pt">depth estimation</span><span class="pt">mesh</span></div></div></div>` },
+            skills: { label:'04', title:'skills', html:`<div class="sgrid"><div class="sg"><div class="sg-t">graphics &amp; gpu</div><div class="si"><span class="s">webgl 2.0</span><span class="s">webgpu</span><span class="s">glsl</span><span class="s">wgsl</span><span class="s">opengl</span><span class="s">cuda</span><span class="s">opencl</span><span class="s">vulkan</span><span class="s">blender</span></div></div><div class="sg"><div class="sg-t">systems</div><div class="si"><span class="s">c++</span><span class="s">c</span><span class="s">parallel computing</span><span class="s">multithreading</span><span class="s">numerical methods</span><span class="s">linux</span></div></div><div class="sg"><div class="sg-t">machine learning</div><div class="si"><span class="s">pytorch</span><span class="s">tensorflow</span><span class="s">keras</span><span class="s">hugging face</span><span class="s">scikit-learn</span><span class="s">pandas</span><span class="s">numpy</span></div></div><div class="sg"><div class="sg-t">vision &amp; robotics</div><div class="si"><span class="s">opencv</span><span class="s">ros2</span><span class="s">gazebo</span><span class="s">zed2</span><span class="s">point clouds</span></div></div><div class="sg"><div class="sg-t">languages</div><div class="si"><span class="s">python</span><span class="s">c++</span><span class="s">javascript</span><span class="s">matlab</span><span class="s">node.js</span><span class="s">vue.js</span><span class="s">mysql</span><span class="s">latex</span></div></div><div class="sg"><div class="sg-t">tools</div><div class="si"><span class="s">git</span><span class="s">docker</span><span class="s">jira</span><span class="s">photoshop</span><span class="s">illustrator</span></div></div></div>` },
+            contact: { label:'05', title:'contact', html:`<p class="body" style="max-width:500px;margin-bottom:2rem">open to research discussions, graduate program enquiries, and collaboration on problems in graphics, vision, and simulation. based in karachi — available globally.</p><div class="clinks"><a href="mailto:zuhair.abbas2503@gmail.com" class="cl"><div><div class="cl-l">email</div><div class="cl-v">zuhair.abbas2503@gmail.com</div></div><span class="cl-a">→</span></a><a href="https://github.com/zuhairs-account" target="_blank" class="cl"><div><div class="cl-l">github</div><div class="cl-v">github.com/zuhairs-account</div></div><span class="cl-a">→</span></a><a href="https://linkedin.com/in/zuhairabbas" target="_blank" class="cl"><div><div class="cl-l">linkedin</div><div class="cl-v">linkedin.com/in/zuhairabbas</div></div><span class="cl-a">→</span></a></div>` }
+        };
+
+        const overlay = document.getElementById('overlay');
+        for (const [key, data] of Object.entries(PANELS)) {
+            const div = document.createElement('div');
+            div.className = 'sec-panel';
+            div.dataset.section = key;
+            div.innerHTML = `<div class="sec-label">${data.label}</div><h2 class="sec-title">${data.title}</h2>${data.html}`;
+            overlay.appendChild(div);
+        }
+
+        const ui = document.getElementById('ui');
+        const hub = document.getElementById('hub');
+        const heroEl = document.getElementById('hero');
+        const backBtn = document.getElementById('back');
+        let state = 'hub', currentPanel = null;
+
+        const nodeToSection = {
+            'n-about': 'about', 'n-exp': 'exp', 'n-projects': 'projects',
+            'n-skills': 'skills', 'n-contact': 'contact'
+        };
+
+        function snapThenAnimate(snapScale, snapBlur, toScale, toBlur) {
+            ui.classList.remove('anim');
+            ui.style.transform = `scale(${snapScale})`;
+            ui.style.filter = `blur(${snapBlur}px)`;
+            void ui.offsetHeight;
+            ui.classList.add('anim');
+            requestAnimationFrame(() => {
+                ui.style.transform = `scale(${toScale})`;
+                ui.style.filter = `blur(${toBlur}px)`;
+            });
+        }
+
+        function diveInto(sectionKey) {
+            if (state === 'section') return;
+            state = 'section';
+            triggerShapeTransition(true);
+            ui.classList.add('anim');
+            ui.style.transform = 'scale(2.4)';
+            ui.style.filter = 'blur(16px)';
+            hub.style.opacity = '0';
+            hub.style.pointerEvents = 'none';
+            heroEl.style.opacity = '0';
+            setTimeout(() => {
+                document.querySelectorAll('.sec-panel').forEach(p => p.style.display = 'none');
+                const panel = overlay.querySelector(`[data-section="${sectionKey}"]`);
+                if (panel) { panel.style.display = 'block'; currentPanel = panel; }
+                overlay.classList.add('vis');
+                backBtn.classList.add('vis');
+                snapThenAnimate(0.6, 16, 1, 0);
+            }, 420);
+        }
+
+        function returnToHub() {
+            if (state === 'hub') return;
+            state = 'hub';
+            triggerShapeTransition(false);
+            ui.classList.add('anim');
+            ui.style.transform = 'scale(0.45)';
+            ui.style.filter = 'blur(16px)';
+            overlay.classList.remove('vis');
+            backBtn.classList.remove('vis');
+            setTimeout(() => {
+                if (currentPanel) currentPanel.style.display = 'none';
+                hub.style.opacity = '1';
+                hub.style.pointerEvents = 'auto';
+                heroEl.style.opacity = '1';
+                snapThenAnimate(1.7, 16, 1, 0);
+            }, 420);
+        }
+
+        nodes.forEach(node => {
+            const key = nodeToSection[node.id];
+            if (!key) return;
+            node.addEventListener('click', () => diveInto(key));
+        });
+        backBtn.addEventListener('click', returnToHub);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') returnToHub(); });
+
+        setTimeout(() => document.getElementById('loading').classList.add('done'), 900);
+    </script>
 </body>
 </html>
